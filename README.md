@@ -1,28 +1,17 @@
-# Śródziemie — Droga Pierścienia (v2.4, bez grafik zastępczych)
+# Śródziemie — Droga Pierścienia v3.0
 
-Paczka do GitHub Pages. Wgraj pliki bezpośrednio do katalogu głównego repozytorium.
+Komplet plików do głównego katalogu repozytorium GitHub Pages. Rozpakuj bez tworzenia dodatkowego katalogu.
 
-Z paczki usunięto 16 tymczasowych grafik: 2 mapy i 14 zdjęć lokacji. Nie zastąpiono ich innymi obrazami. Oryginalne, dostarczone grafiki pozostają w paczce.
+## Nowości
+- Zakładka **Rozwój Wędrowca**: oddzielne filtry marszu, biegu i interwałów, tygodniowe dystanse, trendy tempa i średniego tętna.
+- Porównywanie oznaczonych prób o tym samym rodzaju aktywności i dystansie różniącym się maksymalnie o 0,25 km.
+- Sumaryczny czas w strefach tętna, jeśli został wpisany lub zaimportowany.
+- **Karta Wędrowca**: regularność, bieg ciągły, zarejestrowane RPE i zmiana tempa prób. Wszystkie reguły pokazane użytkowniczce.
+- Zapisywany lokalnie cel, dni treningowe i orientacyjny czas treningu; ostrożne wskazówki oparte na dostępnych treningach.
+- Zachowany import zrzutów Mi Fitness oraz kopie JSON; plan treningowy dołączony do eksportu/importu.
 
-**Ważne:** aplikacja wciąż odwołuje się do nazw brakujących plików graficznych. Do czasu wgrania docelowych obrazów w tych miejscach grafiki mogą się nie wyświetlać. Service worker nie próbuje pobierać brakujących plików podczas instalacji.
-
-## Brakujące docelowe pliki
-
-- `chapter-3-nurtem-wielkiej-rzeki.jpg`
-- `chapter-4-w-cieniu-mordoru.jpg`
-- `stop-hobbiton.jpg`
-- `stop-stary-las.jpg`
-- `stop-brod-bruinen.jpg`
-- `stop-rivendell.jpg`
-- `stop-hollin.jpg`
-- `stop-caradhras.jpg`
-- `stop-moria.jpg`
-- `stop-argonath.jpg`
-- `stop-rauros.jpg`
-- `stop-emyn-muil.jpg`
-- `stop-martwe-bagna.jpg`
-- `stop-cirith-ungol.jpg`
-- `stop-gorgoroth.jpg`
-- `stop-gora-przeznaczenia.jpg`
-
-Dane treningów są przechowywane lokalnie pod kluczem `srodziemie.v1`. Zrób kopię JSON przed zmianą wersji aplikacji.
+## Uwagi
+- Zachowano ten sam klucz localStorage `srodziemie.v1`: dotychczasowe treningi powinny pozostać dostępne. Wykonaj kopię JSON przed aktualizacją.
+- Nie dodano żadnych zastępczych zdjęć. Brakujące zdjęcia lokacji i mapy mogą nadal nie wyświetlać się bez dołożenia ich do repozytorium.
+- Rozpoznawanie obrazu jest OCR w przeglądarce i wymaga potwierdzenia odczytanych wartości.
+- Analiza trendów nie jest diagnozą medyczną ani profesjonalnym planem treningowym; dane z różnych typów wysiłku należy interpretować oddzielnie.

@@ -193,3 +193,9 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .journey-dashboard,.journey-dashboard *{min-width:0;}
 .journey-mainstats{flex-wrap:wrap;}
 @media(max-width:360px){.journey-number{font-size:25px}.journey-percent{font-size:27px}}
+
+/* v2.5 Mi Fitness */
+#miFile{font-size:16px;max-width:100%}.sheet .mini-title{margin-top:13px}.list-row small{line-height:1.6;display:block}
+
+/* v3.0 · Rozwój Wędrowca */
+.growth-v3 .growth-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0 18px}.growth-v3 .growth-filters button{font-size:12px;min-width:0;padding:10px 5px}.growth-v3 .growth-selected{background:#534730;color:#ffe0a4;border-color:#d9b371}.growth-v3 .growth-skill{padding:12px 0;border-bottom:1px solid #8e805450}.growth-v3 .growth-skill:last-child{border:0}.growth-v3 .growth-skill .progress{margin:9px 0}.growth-v3 .growth-zone{margin:13px 0}.growth-v3 .growth-zone .progress{margin:7px 0}.growth-v3 .growth-advice{border:1px solid #ab905f80;border-radius:10px;background:#25332970;padding:14px;margin-top:14px}.growth-v3 .growth-advice p{font-size:13px;line-height:1.6;margin:8px 0 0}.growth-v3 .growth-small{font-size:19px;overflow-wrap:anywhere}.growth-v3 .chart{max-width:100%;height:auto;min-height:150px}.growth-v3 .metrics{margin-top:9px}.growth-v3 .two{min-width:0}.growth-v3 .two>.panel{min-width:0;padding:12px}.growth-v3 .field select{width:100%;max-width:100%}
