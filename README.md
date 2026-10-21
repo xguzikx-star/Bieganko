@@ -35,3 +35,7 @@ Na mapie przesuń palcem w lewo/prawo, aby zobaczyć rozdziały I–IV i widok �
 
 ## v3.5 — Atlas i odznaki
 Atlas-srodziemia.jpg to ilustracyjna, fantastyczna mapa w stylu Śródziemia; mapa jest stylizowana, a nie geodezyjnie dokładna. Warstwa wektorowa pokazuje 20 punktów, przebytą trasę i pozycję wynikającą z danych treningowych. Włącz widok „Cała trasa”. Dwanaście ilustracji medalionów jest mapowanych na 18 osiągnięć, więc niektóre symbole są współdzielone.
+
+
+## v3.7 — spójność map
+Rozdziały II–IV są obecnie widokami tego samego atlasu (`atlas-srodziemia.jpg`) i korzystają z jednej tablicy `WORLD_POINTS`. Nie trzeba wgrywać dawnych grafik `chapter-2`, `chapter-3`, `chapter-4`. Atlas ma charakter ilustracyjny, nie jest geodezyjnie wierną mapą Tolkiena. Rozdział I pozostaje z pierwotną ilustracją Eriadoru.

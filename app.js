@@ -1,9 +1,9 @@
 let mapBrowse=null; // null = bieżący rozdział, 1–4 = przeglądany rozdział, 5 = cała trasa
 const MAP_IMAGES={
   1:'./eriador-atlas.jpg',
-  2:'./chapter-2-przez-gory-i-mroki.jpg',
-  3:'./chapter-3-nurtem-wielkiej-rzeki.jpg',
-  4:'./chapter-4-w-cieniu-mordoru.jpg'
+  2:'./atlas-srodziemia.jpg',
+  3:'./atlas-srodziemia.jpg',
+  4:'./atlas-srodziemia.jpg'
 };
 const MAP_ALTS={
   1:'Ilustrowany atlas Eriadoru',
@@ -48,20 +48,20 @@ const STOP_ART={
  'Komarowe Bagna':'./stop-komarowe-bagna.jpg',
  'Wichrowy Czub':'./stop-wichrowy-czub.jpg',
  'Bród Bruinen':'./eriador-atlas.jpg',
- 'Rivendell':'./chapter-2-przez-gory-i-mroki.jpg',
- 'Hollin':'./chapter-2-przez-gory-i-mroki.jpg',
- 'Caradhras':'./chapter-2-przez-gory-i-mroki.jpg',
- 'Moria':'./chapter-2-przez-gory-i-mroki.jpg',
+ 'Rivendell':'./atlas-srodziemia.jpg',
+ 'Hollin':'./atlas-srodziemia.jpg',
+ 'Caradhras':'./atlas-srodziemia.jpg',
+ 'Moria':'./atlas-srodziemia.jpg',
  'Lothlórien':'./stop-lothlorien.jpg',
  'Anduina':'./stop-anduina.jpg',
- 'Argonath':'./chapter-3-nurtem-wielkiej-rzeki.jpg',
- 'Rauros':'./chapter-3-nurtem-wielkiej-rzeki.jpg',
- 'Emyn Muil':'./chapter-4-w-cieniu-mordoru.jpg',
- 'Martwe Bagna':'./chapter-4-w-cieniu-mordoru.jpg',
+ 'Argonath':'./atlas-srodziemia.jpg',
+ 'Rauros':'./atlas-srodziemia.jpg',
+ 'Emyn Muil':'./atlas-srodziemia.jpg',
+ 'Martwe Bagna':'./atlas-srodziemia.jpg',
  'Ithilien':'./stop-ithilien.jpg',
- 'Cirith Ungol':'./chapter-4-w-cieniu-mordoru.jpg',
- 'Gorgoroth':'./chapter-4-w-cieniu-mordoru.jpg',
- 'Góra Przeznaczenia':'./chapter-4-w-cieniu-mordoru.jpg'
+ 'Cirith Ungol':'./atlas-srodziemia.jpg',
+ 'Gorgoroth':'./atlas-srodziemia.jpg',
+ 'Góra Przeznaczenia':'./atlas-srodziemia.jpg'
 };
 const stopArt=s=>STOP_ART[s.name]||'./atlas-srodziemia.jpg';
 const chapterByDistance=d=>CHAPTERS.find(c=>d<c.goal)||CHAPTERS[CHAPTERS.length-1];
@@ -154,10 +154,19 @@ function atlasMapSvg(){
 // v1.9.1: chapter II–IV pins are placed in the painted image's own pixel space (1086×1448),
 // so the SVG overlay and the illustration scale and crop identically.
 
-const CHAPTER_ART={
- 2:{first:6,last:10,pts:[[930,120],[210,470],[560,235],[700,870],[165,1085]]},
- 3:{first:10,last:13,pts:[[140,150],[470,430],[785,720],[885,1190]]},
- 4:{first:13,last:19,pts:[[80,90],[260,255],[330,545],[235,915],[650,910],[790,320],[945,105]]}
+// JEDEN SZLAK na JEDNYM atlasie. Rozdziały II-IV są kadrami tej samej mapy.
+// Współrzędne na atlasie 1490×1000. Odcinki nie mają niezależnych tras.
+const WORLD_POINTS=[
+ [180,234], [235,258], [330,278], [385,273], [450,260], [530,240], [615,225],
+ [635,325], [665,388], [705,460], [838,435],
+ [914,495], [981,600], [1040,730], [1100,760], [1170,792],
+ [1230,715], [1302,620], [1370,530], [1400,318]
+];
+// Część świata widoczna w rozdziale; wysokość/ szerokość kadru ~ 1.34.
+const CHAPTER_CROPS={
+ 2:[520,160,430,580],
+ 3:[795,345,385,525],
+ 4:[1040,285,445,610]
 };
 function sampleRoute(pts){
  // Catmull-Rom style cubic segments (same as routeCurve) sampled into a polyline with cumulative length per stop.
@@ -172,37 +181,37 @@ function sampleRoute(pts){
  }
  return{seg,cum,total};
 }
-function mapSvg(){
- const k=mapK(),chapter=(mapBrowse>=1&&mapBrowse<=4)?mapBrowse:chapterByDistance(Math.min(k,TOTAL-.01)).id,cfg=CHAPTER_ART[chapter]||CHAPTER_ART[4];
- const chapterStops=stops.slice(cfg.first,cfg.last+1),pts=cfg.pts.map(([x,y])=>({x,y}));
- const path=routeCurve(pts),route=sampleRoute(pts);
- let current=pts[0],done=0;
- if(k>=chapterStops.at(-1).km){current=pts.at(-1);done=route.total}
- else{const j=chapterStops.findIndex(q=>q.km>k);if(j>0){const a=chapterStops[j-1],b=chapterStops[j],t=Math.max(0,Math.min(1,(k-a.km)/(b.km-a.km)));const sg=route.seg[j-1];current=sg.at(t);const s1=sg.samples[Math.floor(t*40)],s2=sg.samples[Math.min(40,Math.floor(t*40)+1)];done=s1.l+(s2.l-s1.l)*(t*40-Math.floor(t*40))}}
- const anchors=chapterStops.map((stop,i)=>{const p=pts[i],seen=stop.km<=k,major=stop.kind==='major',r=major?15:10;
-  const label=seen||major?esc(stop.name):'?';const side=p.x>600?-1:1;
-  return `<g class="stop map-pin ${seen?'unlocked':'locked'}" data-stop="${cfg.first+i}" tabindex="0" role="button" aria-label="${seen?esc(stop.name):'Nieodkryte miejsce'}"><circle cx="${p.x}" cy="${p.y}" r="44" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${r+8}" fill="#06100cc8" opacity=".88"/><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${seen?'#d9b06f':'#10221b'}" stroke="${seen?'#ffe7b1':'#c1ad82'}" stroke-width="${major?4:3}"/><text x="${p.x+side*30}" y="${p.y-24}" text-anchor="${side>0?'start':'end'}" class="map-label chapter-label ${seen?'discovered':''}">${label}</text></g>`}).join('');
- const T=route.total.toFixed(1),D=Math.max(0,done).toFixed(1);
- return `<svg viewBox="0 0 1086 1448" preserveAspectRatio="xMidYMid slice" role="group" aria-label="Mapa wyprawy ze ścieżką i interaktywnymi miejscami"><defs><filter id="mapglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter></defs><path d="${path}" fill="none" stroke="#3c3324" stroke-width="13" stroke-linejoin="round" stroke-linecap="round" opacity=".55"/><path d="${path}" fill="none" stroke="#f6e7c2" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2 16" opacity=".85"/><path d="${path}" fill="none" stroke="#f1cc85" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${D} ${T}" style="filter:drop-shadow(0 0 6px #d9ac5f)"/><path d="${path}" fill="none" stroke="#fff0bb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${D} ${T}" opacity=".96"/>${anchors}<g pointer-events="none"><circle cx="${current.x}" cy="${current.y}" r="34" fill="#ecc47d" opacity=".3" filter="url(#mapglow)"/><circle cx="${current.x}" cy="${current.y}" r="18" fill="#0f1813" stroke="#f2c37b" stroke-width="4"/><circle cx="${current.x}" cy="${current.y}" r="8" fill="#ffecbd" stroke="#ae7645" stroke-width="2"/></g></svg>`;
-}
 
+function routeDistanceGeometry(k,pts,segmentStops){
+ const r=sampleRoute(pts);let current=pts[0],done=0;
+ if(k>=segmentStops.at(-1).km){current=pts.at(-1);done=r.total}
+ else if(k>segmentStops[0].km){
+  const j=segmentStops.findIndex(v=>v.km>k);
+  if(j>0){const t=Math.min(1,Math.max(0,(k-segmentStops[j-1].km)/(segmentStops[j].km-segmentStops[j-1].km)));
+   const seg=r.seg[j-1];current=seg.at(t);const ix=Math.floor(t*40),a=seg.samples[ix],b=seg.samples[Math.min(40,ix+1)];done=a.l+(b.l-a.l)*(t*40-ix);
+  }
+ }
+ return {path:routeCurve(pts),current,done,total:r.total};
+}
+function sharedAtlasSvg(chapter){
+ const k=mapK(),overview=chapter===5;
+ const first=overview?0:CHAPTERS[chapter-1].id===1?0:[0,6,10,13][chapter-1];
+ const last=overview?19:[6,10,13,19][chapter-1];
+ const cropped=overview?[0,0,1490,1000]:CHAPTER_CROPS[chapter];
+ const pts=WORLD_POINTS.slice(first,last+1).map(([x,y])=>({x,y}));
+ const stageStops=stops.slice(first,last+1),g=routeDistanceGeometry(k,pts,stageStops);
+ const dots=pts.map((p,i)=>{const st=stageStops[i],seen=st.km<=k,major=st.kind==='major',r=major?11:8;
+  return `<g data-stop="${first+i}" role="button" tabindex="0" aria-label="${esc(st.name)}"><circle cx="${p.x}" cy="${p.y}" r="25" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${r+4}" fill="#091a16c9"/><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${seen?'#f2ce85':'#293932'}" stroke="#ffe1a9" stroke-width="2.5"/>${(major||overview&&i%2===0)?`<text x="${p.x+14}" y="${p.y-16}" class="chapter-label" style="font-size:${overview?19:23}px">${esc(st.name)}</text>`:''}</g>`}).join('');
+ const position=k<stageStops[0].km?null:g.current;
+ const v=cropped.join(' '),progress=g.done.toFixed(1),total=g.total.toFixed(1);
+ return `<svg class="unified-atlas-svg" viewBox="${v}" preserveAspectRatio="xMidYMid meet" aria-label="${overview?'Cała mapa Śródziemia':'Mapa rozdziału '+chapter} ze wspólną trasą"><image href="./atlas-srodziemia.jpg" x="0" y="0" width="1490" height="1000" preserveAspectRatio="none"/><path d="${g.path}" stroke="#241e14" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${g.path}" stroke="#e1c68d" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-dasharray="3 13"/><path d="${g.path}" stroke="#e6b65c" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="${progress} ${total+2}"/><path d="${g.path}" stroke="#fff3c4" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="${progress} ${total+2}"/>${dots}${position?`<g pointer-events="none"><circle cx="${position.x}" cy="${position.y}" r="19" fill="#0b1816" stroke="#ffeab2" stroke-width="4"/><circle cx="${position.x}" cy="${position.y}" r="7" fill="#ffdb81"/></g>`:''}</svg>`;
+}
+function mapSvg(){return sharedAtlasSvg(mapBrowse||chapterByDistance(Math.min(mapK(),TOTAL-.01)).id)}
 function positionAt(k){if(k<=0)return stops[0];for(let i=1;i<stops.length;i++){if(k<=stops[i].km){let a=stops[i-1],b=stops[i],t=(k-a.km)/(b.km-a.km);return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}}}return stops.at(-1)}
 
 // Atlas całej wyprawy: schematyczna mapa szlaku (nie geograficzny atlas Tolkiena).
 // Używa tych samych punktów i dystansów co wszystkie rozdziały.
-function worldMapSvg(){
- const k=Math.min(TOTAL,mapK());
- // Współrzędne ilustracyjne, kolejność i km wynikają ze źródłowej listy stops.
- const coords=[[52,165],[94,167],[162,169],[215,174],[263,176],[306,181],[343,185],[405,219],[455,250],[492,310],[505,353],[567,397],[616,437],[645,477],[685,513],[736,540],[784,551],[860,528],[924,501],[970,398]];
- const P=stops.map((s,i)=>({x:coords[i][0],y:coords[i][1],km:s.km,name:s.name,major:!!s.kind}));
- const path=routeCurve(P),route=sampleRoute(P);
- let current=P[0],done=0;
- if(k>=TOTAL){current=P.at(-1);done=route.total}
- else if(k>0){const j=stops.findIndex(s=>s.km>k);if(j>0){const t=Math.max(0,Math.min(1,(k-stops[j-1].km)/(stops[j].km-stops[j-1].km))),seg=route.seg[j-1];current=seg.at(t);const ix=Math.floor(t*40),a=seg.samples[ix],b=seg.samples[Math.min(40,ix+1)];done=a.l+(b.l-a.l)*(t*40-ix)}}
- const anchors=P.map((p,i)=>{const seen=stops[i].km<=k,major=p.major;return `<g class="world-stop" data-stop="${i}" tabindex="0" role="button" aria-label="${esc(p.name)}"><circle cx="${p.x}" cy="${p.y}" r="${major?8:5}" fill="${seen?'#e6b95f':'#23312b'}" stroke="${seen?'#ffebbe':'#f0d6a2'}" stroke-width="2.5"/><circle cx="${p.x}" cy="${p.y}" r="15" fill="transparent"/></g>`}).join('');
- const totalLength=route.total.toFixed(2),currentLength=done.toFixed(2);
- return `<svg class="world-svg world-atlas-svg" viewBox="0 0 1076 716" preserveAspectRatio="xMidYMid meet" aria-label="Interaktywny atlas całej wyprawy"><image href="./atlas-srodziemia.jpg" x="0" y="0" width="1076" height="716" preserveAspectRatio="none"/><rect x="0" y="0" width="1076" height="716" fill="#081713" opacity=".24"/><path d="${path}" fill="none" stroke="#0a1614" stroke-width="12" opacity=".9" stroke-linecap="round"/><path d="${path}" fill="none" stroke="#dec99a" stroke-width="4" opacity=".8" stroke-dasharray="2 11" stroke-linecap="round"/><path d="${path}" fill="none" stroke="#e9bb60" stroke-width="8" stroke-dasharray="${currentLength} ${totalLength}" stroke-linecap="round" style="filter:drop-shadow(0 0 6px #e6ac49)"/><path d="${path}" fill="none" stroke="#fff0c5" stroke-width="2.5" stroke-dasharray="${currentLength} ${totalLength}" stroke-linecap="round"/>${anchors}<circle cx="${current.x}" cy="${current.y}" r="14" fill="#0f1e1b" stroke="#ffe5a7" stroke-width="3.5"/><circle cx="${current.x}" cy="${current.y}" r="5" fill="#ffdaa0"/></svg>`;
-}
+function worldMapSvg(){return sharedAtlasSvg(5)}
 function setMapBrowse(n){
  mapBrowse=n===0?5:n;
  mapZoom=1;mapPan={x:0,y:0};
@@ -231,7 +240,7 @@ function renderMap(){
  const chapterMapAlt=MAP_ALTS[chapter]||'Ilustrowana mapa wyprawy';
  return `${backupBanner()}<section class="journey-intro"><div class="journey-rule"><span>✦</span><small>${allMap?'CAŁA WYPRAWA':`ROZDZIAŁ ${shownMeta.roman} · WYPRAWA I`}</small><span>✦</span></div><h2>${allMap?'Atlas całej podróży':esc(shownMeta.title)}</h2><p>${allMap?'Wszystkie miejsca, pełna trasa i droga, którą już przebyłaś.':esc(shownMeta.intro)}</p></section>
  <div class="world-nav" aria-label="Przeglądaj mapy"><button id="mapPrevious" aria-label="Poprzednia mapa">‹</button><span>${allMap?'Całe Śródziemie':`Rozdział ${shownMeta.roman} / IV`}</span><button id="mapNext" aria-label="Następna mapa">›</button><button id="mapOverview" class="world-overview-btn" aria-label="Pokaż całą trasę">Cała trasa</button></div>
- <div class="map-frame"><div class="map-stage ${allMap?'world-stage':''}" id="mapStage"><div class="map-art" id="mapArt">${allMap?worldMapSvg():shown===1?`<img class="map-landscape atlas-image" src="${MAP_IMAGES[1]}" alt="${MAP_ALTS[1]}" draggable="false">${atlasMapSvg()}`:`<img class="map-landscape" src="${MAP_IMAGES[shown]}" alt="${MAP_ALTS[shown]}" draggable="false">${mapSvg()}`}</div><div class="map-tools${shown===1?' atlas-tools':''}"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div></div><div class="map-frame-caption"><span>${allMap?'✧ CAŁA WYPRAWA':'✧ PRZEGLĄD SZLAKU'}</span><span>Przesuń palcem w lewo lub prawo</span></div></div>
+ <div class="map-frame"><div class="map-stage ${allMap?'world-stage':''}" id="mapStage"><div class="map-art" id="mapArt">${allMap?worldMapSvg():shown===1?`<img class="map-landscape atlas-image" src="${MAP_IMAGES[1]}" alt="${MAP_ALTS[1]}" draggable="false">${atlasMapSvg()}`:`${sharedAtlasSvg(shown)}`}</div><div class="map-tools${shown===1?' atlas-tools':''}"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div></div><div class="map-frame-caption"><span>${allMap?'✧ CAŁA WYPRAWA':'✧ PRZEGLĄD SZLAKU'}</span><span>Przesuń palcem w lewo lub prawo</span></div></div>
  <section class="journey-dashboard">
  <div class="journey-heading"><div><small class="eyebrow">TWOJA WĘDRÓWKA</small><h2>Droga do ${esc(chapterGoalName)}</h2></div><span class="journey-medallion">✧</span></div>
  <div class="journey-mainstats"><div><span class="journey-number">${fmt(chapterDistance)}<small> / ${fmt(goal-start)} km</small></span><p>Przebyty szlak w tym rozdziale</p></div><div class="journey-percent">${pct.toFixed(1).replace('.',',')}<span>%</span></div></div>

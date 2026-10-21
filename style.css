@@ -250,3 +250,8 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .seal.locked .badge-art{opacity:.62}.seal-big{width:100px;height:100px}
 .map-stage.world-stage,.map-frame .map-stage.world-stage{aspect-ratio:1076/716!important;background:#17231e}
 .world-atlas-svg{width:100%;height:100%}.world-stage .map-art>svg{overflow:hidden}
+
+/* v3.7: wspólny atlas; kadry II–IV korzystają z tego samego tła i geometrii */
+.unified-atlas-svg{width:100%;height:100%;display:block;overflow:hidden}
+.map-stage:not(:has(.atlas-image)) .unified-atlas-svg{width:100%;height:100%}
+.unified-atlas-svg .chapter-label{fill:#fff0ca;stroke:#111813;stroke-width:4px;paint-order:stroke;stroke-linejoin:round;pointer-events:none;font-family:Marcellus,Georgia,serif}
