@@ -42,3 +42,6 @@ Rozdziały II–IV są obecnie widokami tego samego atlasu (`atlas-srodziemia.jp
 
 
 Aktualizacja v3.8: dodane ilustracyjne karty rozdziałów w górnej części mapy, w stylu zintegrowanej karty z gradientem.
+
+
+Aktualizacja v3.9: widok Cała trasa otrzymał kartę hero w tym samym stylu co rozdziały oraz dopracowaną górną sekcję atlasu.
