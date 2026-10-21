@@ -1,4 +1,4 @@
-# Śródziemie PWA v1.2
+# Śródziemie PWA v1.3
 
 Aktualizacja rozszerza aplikację o przygotowane pozostałe etapy podróży:
 - pełną strukturę 4 rozdziałów wyprawy,
