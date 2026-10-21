@@ -186,4 +186,10 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 @keyframes revealPan{from{transform:scale(1.12)}to{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.reveal-art img,.reveal-seal .seal,.reveal-sealstage .seal{animation:none}.reveal-card{transition:none}}
 
-.stop-km{color:#c9ab73;font-size:11px;letter-spacing:1.4px;margin:14px 0 4px}
+/* v2.4: poprawki mobilne i spójność układu */
+.map-stage{overflow:hidden;max-width:100%;}
+.map-art{will-change:transform;}
+.map-stage .atlas-overlay{overflow:hidden;}
+.journey-dashboard,.journey-dashboard *{min-width:0;}
+.journey-mainstats{flex-wrap:wrap;}
+@media(max-width:360px){.journey-number{font-size:25px}.journey-percent{font-size:27px}}

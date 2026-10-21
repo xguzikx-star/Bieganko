@@ -1,22 +1,28 @@
-# Śródziemie v2.0
+# Śródziemie — Droga Pierścienia (v2.4, bez grafik zastępczych)
 
-Kontrola plików i poprawki: niezależna ilustracja dla późniejszych rozdziałów osadzona w aplikacji; nieodkryte miejsca nie ujawniają ilustracji; nowa wersja plików JS/CSS; naprawiony numer wersji w ustawieniach. Dane lokalne przechowywane pod tym samym kluczem.
+Paczka do GitHub Pages. Wgraj pliki bezpośrednio do katalogu głównego repozytorium.
 
-Uwaga: zaawansowane testy w Safari na fizycznym iPhonie nadal nie zostały wykonane, a atlas dalszych etapów jest tymczasowym obrazem koncepcyjnym.
+Z paczki usunięto 16 tymczasowych grafik: 2 mapy i 14 zdjęć lokacji. Nie zastąpiono ich innymi obrazami. Oryginalne, dostarczone grafiki pozostają w paczce.
 
+**Ważne:** aplikacja wciąż odwołuje się do nazw brakujących plików graficznych. Do czasu wgrania docelowych obrazów w tych miejscach grafiki mogą się nie wyświetlać. Service worker nie próbuje pobierać brakujących plików podczas instalacji.
 
-v1.9: grafika etapów II–IV zakodowana ponownie jako lżejszy JPEG, ograniczona wysokość mapy na iPhone, zablokowane rozciąganie strony.
+## Brakujące docelowe pliki
 
-v1.9.1: trasy rozdziałów II–IV przypięte do namalowanych miejsc na ilustracjach (wspólny układ współrzędnych 1086×1448, ramka mapy w tych samych proporcjach co obraz); przyciski mapy w rozdziale I nałożone dokładnie na przyciski namalowane w atlasie; czytelniejszy znacznik pozycji; poprawione nazwy punktów atlasu (stuknięcie otwierało złą kartę); kolumna aplikacji na komputerze/iPadzie wraca do 620 px; miniatury miejsc ładowane z plików zamiast base64 (app.js 810 KB → 36 KB); mapy II–IV lżejsze o ok. 45%; service worker zapisuje kopię offline; podbite wersje plików (?v=1.9.1), żeby iPhone nie trzymał starej wersji.
+- `chapter-3-nurtem-wielkiej-rzeki.jpg`
+- `chapter-4-w-cieniu-mordoru.jpg`
+- `stop-hobbiton.jpg`
+- `stop-stary-las.jpg`
+- `stop-brod-bruinen.jpg`
+- `stop-rivendell.jpg`
+- `stop-hollin.jpg`
+- `stop-caradhras.jpg`
+- `stop-moria.jpg`
+- `stop-argonath.jpg`
+- `stop-rauros.jpg`
+- `stop-emyn-muil.jpg`
+- `stop-martwe-bagna.jpg`
+- `stop-cirith-ungol.jpg`
+- `stop-gorgoroth.jpg`
+- `stop-gora-przeznaczenia.jpg`
 
-v1.9.2: wszystkie obrazki leżą w głównym folderze, tak samo jak w repozytorium na GitHubie (bez podfolderu assets/).
-
-v1.9.3: brak automatycznego przybliżania na iPhonie przy wpisywaniu treningu (pola formularza 16 px), zabezpieczenie pola daty przed rozpychaniem formularza.
-
-v2.0: ekran odkrycia nowego miejsca z ilustracją i pieczęcią (oraz informacją o zakończeniu rozdziału), animacja przejścia znacznika po trasie po zapisaniu treningu, dziennik wyprawy w Kronice (wpis do każdego treningu zależny od miejsca na szlaku i rodzaju treningu), 18 pieczęci do zdobycia, przypomnienie o kopii zapasowej co 7 dni (z podpowiedzią o dodaniu do ekranu początkowego).
-
-v2.1: usunięte komentarze techniczne z kart miejsc, mapy, kroniki i ustawień.
-
-v2.2: nowe fotorealistyczne grafiki 17 lokacji (960×640).
-
-v2.3: grafiki Emyn Muil, Ithilien i Góry Przeznaczenia.
+Dane treningów są przechowywane lokalnie pod kluczem `srodziemie.v1`. Zrób kopię JSON przed zmianą wersji aplikacji.

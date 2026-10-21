@@ -1,7 +1,9 @@
-// v1.9.1: network-first for everything (fresh UI online), with a precached copy for offline use.
-const CACHE='srodziemie-v230';
-const CORE=['./','./index.html','./style.css?v=2.3','./app.js?v=2.3','./manifest.webmanifest','./chapter-2-przez-gory-i-mroki.jpg','./chapter-3-nurtem-wielkiej-rzeki.jpg','./chapter-4-w-cieniu-mordoru.jpg','./eriador-atlas.jpg','./icon-180.png','./icon-192.png','./icon-512.png','./icon.svg','./stop-anduina.jpg','./stop-argonath.jpg','./stop-bree.jpg','./stop-brod-bruinen.jpg','./stop-caradhras.jpg','./stop-cirith-ungol.jpg','./stop-emyn-muil.jpg','./stop-gora-przeznaczenia.jpg','./stop-gorgoroth.jpg','./stop-hobbiton.jpg','./stop-hollin.jpg','./stop-ithilien.jpg','./stop-komarowe-bagna.jpg','./stop-lothlorien.jpg','./stop-martwe-bagna.jpg','./stop-moria.jpg','./stop-rauros.jpg','./stop-rivendell.jpg','./stop-stary-las.jpg','./stop-wichrowy-czub.jpg'];
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).catch(()=>{}).then(()=>self.skipWaiting()))});
-self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('srodziemie-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET')return;const url=new URL(req.url);if(url.origin!==self.location.origin)return;
- event.respondWith(fetch(req,{cache:'no-store'}).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put(req,copy))}return res}).catch(()=>caches.match(req).then(hit=>hit||(req.mode==='navigate'?caches.match('./index.html'):Response.error()))))});
+const CACHE='srodziemie-v241';
+const CORE=["./", "./index.html", "./style.css?v=2.4", "./app.js?v=2.4", "./manifest.webmanifest", "./chapter-2-przez-gory-i-mroki.jpg", "./icon-192.png", "./icon.svg", "./stop-lothlorien.jpg", "./icon-180.png", "./stop-ithilien.jpg", "./stop-bree.jpg", "./eriador-atlas.jpg", "./stop-anduina.jpg", "./stop-wichrowy-czub.jpg", "./stop-komarowe-bagna.jpg", "./icon-512.png"];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()))});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('srodziemie-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
+self.addEventListener('fetch',e=>{const req=e.request;if(req.method!=='GET')return;const url=new URL(req.url);if(url.origin!==self.location.origin)return;
+const navigation=req.mode==='navigate';
+e.respondWith(navigation?fetch(req).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put('./index.html',copy))}return res}).catch(()=>caches.match('./index.html')):
+caches.match(req).then(hit=>hit||fetch(req).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put(req,copy))}return res})))
+});
