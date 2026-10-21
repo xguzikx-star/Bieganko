@@ -1,60 +1,25 @@
-# Śródziemie — Droga Pierścienia (v0.1)
+# Śródziemie PWA v1.2
 
-Mobilna aplikacja PWA na iPhone'a, hostowana na GitHub Pages. Rejestruje marsz, bieg i interwały (szybko lub szczegółowo); oblicza trasę w skali **1 km realny = 3 km fabularne**; pokazuje kronikę odkryć, tygodniowy wykres dystansu oraz serię tygodniową. Umożliwia dodawanie starszych treningów, edycję, usuwanie, eksport i import JSON.
+Aktualizacja rozszerza aplikację o przygotowane pozostałe etapy podróży:
+- pełną strukturę 4 rozdziałów wyprawy,
+- komplet przystanków aż do Góry Przeznaczenia,
+- uzupełnione opisy etapów,
+- osobne karty graficzne dla dalszych lokacji,
+- sekcję „Pozostałe etapy podróży” w Kronice.
 
-## Instalacja na GitHub Pages
+## Pliki
+- `index.html`
+- `style.css`
+- `app.js`
+- `manifest.webmanifest`
+- `sw.js`
+- `assets/*`
 
-1. Utwórz repozytorium, np. `srodziemie`, i wgraj **zawartość** tego folderu do katalogu głównego repozytorium (index.html musi być w root).
-2. Wejdź do **Settings → Pages → Build and deployment → Deploy from a branch**, wybierz `main`, katalog `/ (root)` i zapisz.
-3. Otwórz adres `https://NAZWA-UZYTKOWNIKA.github.io/srodziemie/` w Safari na iPhonie.
-4. W Safari wybierz **Udostępnij → Dodaj do ekranu początkowego**.
+## Publikacja na GitHub Pages
+1. Rozpakuj ZIP.
+2. Wrzuć całą zawartość do repozytorium / gałęzi publikacyjnej.
+3. Włącz GitHub Pages dla folderu root.
+4. Odśwież stronę w przeglądarce mobilnej.
 
-Działa jako statyczna strona (nie wymaga backendu). Możesz także uruchomić lokalny serwer, np. `python -m http.server 8000`, i otworzyć `http://localhost:8000` na komputerze. Otwieranie index.html przez `file://` nie gwarantuje instalacji PWA ani działania service workera.
-
-## Dane i kopie
-
-Dane treningowe zapisują się w `localStorage` danej instalacji przeglądarki. **Nie synchronizują się** przez GitHub ani między urządzeniami. Korzystaj z ikony ustawień → „Pobierz kopię JSON”. Przywracanie kopii **zastępuje** istniejące dane. Nie przechowuj prywatnego JSON w publicznym repozytorium. Wyczyszczenie danych strony może usunąć dziennik.
-
-## Znane ograniczenia
-
-- **Kartografia v0.1 jest stylizowaną mapą SVG, a nie geograficznie dokładną mapą Tolkiena.** Kilometraż punktów pośrednich i podział trasy to wartości robocze, wymagające weryfikacji w jednej konsekwentnej rekonstrukcji. Przyjęte kotwice: 0 / 737 / 1481 / 2107 / 2863 km fabularnych.
-- Karty odkryć zawierają krótkie autorskie opisy; ilustracje miejsc i komplet badań źródłowych to następna iteracja.
-- Wersja v0.1 nie ma automatycznego importu treningów ze smartwatcha, synchronizacji, testów na urządzeniach ani kolejnych wypraw.
-- Po zapisie segmentów treningu dystans pozostaje wpisaną wartością z bieżni. Tempo liczone jest jako czas/dystans, nie z sumy prędkości segmentów.
-- Po zmianie danych odznaki odkryć przeliczane są z bieżącego kilometrażu.
-
-## Struktura
-
-`index.html` · `style.css` · `app.js` · `sw.js` · `manifest.webmanifest` · `assets/`
-
-Kod bez frameworka i kompilatora — wygodny do kolejnych iteracji i publikacji bez builda.
-
-
-## v0.2 — mapa ilustracyjna
-Tło `assets/eriador-landscape.webp` jest osobnym plikiem rastrowym 1280×1700. Droga, znaczniki, obecna pozycja i nazwy są generowane jako interaktywne SVG w `app.js`. Dzięki temu nie ma wygenerowanych na obrazie napisów ani nieprawidłowych oznaczeń. Tło jest ilustracyjną interpretacją krajobrazu, **nie** dokładnym atlasem Śródziemia. Geograficzny przebieg trasy i dystanse punktów pośrednich wymagają weryfikacji.
-
-Przed podmianą plików na GitHubie wyeksportuj kopię treningów z Ustawień. Klucz danych `srodziemie.v1` pozostaje bez zmian, więc aktualizacja zachowuje dotychczasowy dziennik na tym samym urządzeniu i adresie.
-
-
-## Wersja 0.3 — nowy krajobraz
-
-Podmieniono tło pierwszego rozdziału na osobny obraz malarski w `assets/eriador-landscape.webp`. Trasa i znaczniki pozostają interaktywną warstwą SVG w `app.js`. Późniejsze rozdziały mają roboczy układ i wymagają osobnych ilustracji oraz zatwierdzenia geografii. Wymiana plików nie czyści danych zapisanych w localStorage, lecz przed aktualizacją zalecamy eksport JSON.
-
-
-## v0.4 — naprawa mapy iPhone
-Ilustracja WebP jest teraz elementem HTML `<img>` pod nakładką SVG (Safari nie musi pobierać zewnętrznego obrazu z wnętrza SVG). Trasa jest prowadzona krzywymi Béziera, SVG pozostaje interaktywne. Cache PWA podniesiony do srodziemie-v4. Zachowany klucz danych localStorage `srodziemie.v1`.
-
-
-## v0.5 — naprawa wyświetlania mapy
-Ilustracja mapy jest osadzona wewnątrz `app.js` jako obraz WebP w postaci data URL; nie wymaga już oddzielnego pliku z katalogu assets. Wgraj wszystkie pliki z ZIP do katalogu publikowanego przez GitHub Pages, w tym `app.js`, `index.html` i `sw.js`. Zmiana wersji cache to `srodziemie-v5`. Przed aktualizacją wyeksportuj historię treningów do JSON. Jeśli dalej wystąpi problem, sprawdź, czy GitHub Pages na pewno serwuje nowy plik `app.js`, otwierając jego URL w przeglądarce.
-
-
-## Wersja 0.6
-Pierwszy rozdział wykorzystuje bezpośrednio zatwierdzony kadr atlasu jako nieedytowalne tło. Klikalne znaczniki i aktualna pozycja są nakładane wektorowo. Teksty i złota linia będące częścią obrazu pozostają rastrowe — dokładne rozdzielenie wymaga odrębnej czystej ilustracji mapy. Historia treningów pozostaje w localStorage pod dotychczasowym kluczem.
-
-
-## v0.9 – ekran główny
-- Font Marcellus dla nagłówków i Inter dla interfejsu (online Google Fonts; offline fallback Georgia/system-ui).
-- Rozbudowany panel podróży pod mapą: rzeczywisty postęp rozdziału, odkrycia, ostatni trening, tygodniowa seria.
-- Mapa i interaktywny złoty szlak pozostają bez zmian.
-- Dane treningów pozostają na urządzeniu. Przed aktualizacją zrób eksport JSON.
+## Uwaga
+Service worker używa strategii sieciowej dla kodu aplikacji, żeby ograniczyć problem ze starym cache na telefonie.

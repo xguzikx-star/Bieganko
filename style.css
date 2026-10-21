@@ -78,3 +78,25 @@ h1,h2,h3,.top h1,.section-title,.mini-title,.hero-title,.sheet h2,.metrics stron
 .journey-chronicle{padding:16px 0}.journey-chronicle>div{display:flex;justify-content:space-between;align-items:center;color:#d3af73}.journey-chronicle p{font-family:Marcellus,Georgia,serif;font-size:16px;color:#e6d9bd;line-height:1.45;margin:11px 0}.journey-chronicle>small{color:#b1b5a7;font-size:10px}
 .journey-add{margin-top:7px;font-size:14px;letter-spacing:.2px}
 @media(max-width:385px){.journey-number{font-size:27px}.journey-percent{font-size:29px}.journey-heading h2{font-size:20px}.journey-stats strong{font-size:16px}}
+
+/* v1.0: avoid oversized zoom and improve fit */
+.map-frame .map-art{transform-origin:center center}
+.atlas-overlay{pointer-events:none}
+.atlas-hotspot{pointer-events:auto}
+
+/* v1.1 polish: richer discovery cards, illustrated milestone sheets, single glowing route */
+.discover-rich{padding:0;overflow:hidden;grid-template-columns:118px 1fr;align-items:stretch}
+.discover-rich img{width:118px;height:100%;min-height:116px;object-fit:cover;display:block;border-right:1px solid #8e77504f}
+.discover-copy{padding:14px 14px 14px 0}
+.discover-copy .mini-title{margin:8px 0 7px}
+.illustration.has-art{height:178px;background:#0e1713;border:1px solid #8f7a5559;box-shadow:inset 0 0 0 1px #ffffff09}
+.illustration.has-art img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.95) contrast(1.03) brightness(.96)}
+.illustration.has-art:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0a120f12,transparent 30%,#09130ea8 100%)}
+.illustration.has-art:after{display:none}
+.sheet-stop-hero .eyebrow{display:block;margin:4px 0 9px}
+.sheet-stop-hero h2{margin-bottom:14px}
+.map-label{font:13px Marcellus,Georgia,serif;fill:#dfc692;paint-order:stroke;stroke:#08110d;stroke-width:3px;stroke-linejoin:round}
+.map-label.discovered{fill:#f2e0b9}
+.journey-next p{line-height:1.5}
+.map-frame-caption{font-size:7.5px;letter-spacing:1.2px}
+@media(max-width:385px){.discover-rich{grid-template-columns:96px 1fr}.discover-rich img{width:96px;min-height:110px}}
