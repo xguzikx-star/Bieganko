@@ -1,6 +1,7 @@
-const CACHE='srodziemie-v330';
-const CORE=["./", "./index.html", "./style.css?v=3.3", "./app.js?v=3.3", "./manifest.webmanifest", "./chapter-2-przez-gory-i-mroki.jpg", "./icon-192.png", "./icon.svg", "./stop-lothlorien.jpg", "./icon-180.png", "./stop-ithilien.jpg", "./stop-bree.jpg", "./eriador-atlas.jpg", "./stop-anduina.jpg", "./stop-wichrowy-czub.jpg", "./stop-komarowe-bagna.jpg", "./icon-512.png"];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()))});
+const CACHE='srodziemie-v350';
+const CORE=["./", "./index.html", "./style.css?v=3.5", "./app.js?v=3.5", "./manifest.webmanifest", "./chapter-2-przez-gory-i-mroki.jpg", "./icon-192.png", "./icon.svg", "./stop-lothlorien.jpg", "./icon-180.png", "./stop-ithilien.jpg", "./stop-bree.jpg", "./eriador-atlas.jpg", "./stop-anduina.jpg", "./stop-wichrowy-czub.jpg", "./stop-komarowe-bagna.jpg", "./icon-512.png"];
+const NEW_ART=['./atlas-srodziemia.jpg','./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i,'./badge-art-%02d.png'%i];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(cache=>cache.addAll([...CORE,...NEW_ART])).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('srodziemie-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const req=e.request;if(req.method!=='GET')return;const url=new URL(req.url);if(url.origin!==self.location.origin)return;
 const navigation=req.mode==='navigate';

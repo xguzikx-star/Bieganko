@@ -1,3 +1,4 @@
+let mapBrowse=null; // null = bieżący rozdział, 1–4 = przeglądany rozdział, 5 = cała trasa
 const MAP_IMAGES={
   1:'./eriador-atlas.jpg',
   2:'./chapter-2-przez-gory-i-mroki.jpg',
@@ -158,7 +159,7 @@ function sampleRoute(pts){
  return{seg,cum,total};
 }
 function mapSvg(){
- const k=mapK(),chapter=k<737?1:k<1481?2:k<2107?3:4,cfg=CHAPTER_ART[chapter]||CHAPTER_ART[4];
+ const k=mapK(),chapter=(mapBrowse>=1&&mapBrowse<=4)?mapBrowse:chapterByDistance(Math.min(k,TOTAL-.01)).id,cfg=CHAPTER_ART[chapter]||CHAPTER_ART[4];
  const chapterStops=stops.slice(cfg.first,cfg.last+1),pts=cfg.pts.map(([x,y])=>({x,y}));
  const path=routeCurve(pts),route=sampleRoute(pts);
  let current=pts[0],done=0;
@@ -173,8 +174,33 @@ function mapSvg(){
 
 function positionAt(k){if(k<=0)return stops[0];for(let i=1;i<stops.length;i++){if(k<=stops[i].km){let a=stops[i-1],b=stops[i],t=(k-a.km)/(b.km-a.km);return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}}}return stops.at(-1)}
 
+// Atlas całej wyprawy: schematyczna mapa szlaku (nie geograficzny atlas Tolkiena).
+// Używa tych samych punktów i dystansów co wszystkie rozdziały.
+function worldMapSvg(){
+ const k=Math.min(TOTAL,mapK());
+ // Współrzędne ilustracyjne, kolejność i km wynikają ze źródłowej listy stops.
+ const coords=[[52,165],[94,167],[162,169],[215,174],[263,176],[306,181],[343,185],[405,219],[455,250],[492,310],[505,353],[567,397],[616,437],[645,477],[685,513],[736,540],[784,551],[860,528],[924,501],[970,398]];
+ const P=stops.map((s,i)=>({x:coords[i][0],y:coords[i][1],km:s.km,name:s.name,major:!!s.kind}));
+ const path=routeCurve(P),route=sampleRoute(P);
+ let current=P[0],done=0;
+ if(k>=TOTAL){current=P.at(-1);done=route.total}
+ else if(k>0){const j=stops.findIndex(s=>s.km>k);if(j>0){const t=Math.max(0,Math.min(1,(k-stops[j-1].km)/(stops[j].km-stops[j-1].km))),seg=route.seg[j-1];current=seg.at(t);const ix=Math.floor(t*40),a=seg.samples[ix],b=seg.samples[Math.min(40,ix+1)];done=a.l+(b.l-a.l)*(t*40-ix)}}
+ const anchors=P.map((p,i)=>{const seen=stops[i].km<=k,major=p.major;return `<g class="world-stop" data-stop="${i}" tabindex="0" role="button" aria-label="${esc(p.name)}"><circle cx="${p.x}" cy="${p.y}" r="${major?8:5}" fill="${seen?'#e6b95f':'#23312b'}" stroke="${seen?'#ffebbe':'#f0d6a2'}" stroke-width="2.5"/><circle cx="${p.x}" cy="${p.y}" r="15" fill="transparent"/></g>`}).join('');
+ const totalLength=route.total.toFixed(2),currentLength=done.toFixed(2);
+ return `<svg class="world-svg world-atlas-svg" viewBox="0 0 1076 716" preserveAspectRatio="xMidYMid meet" aria-label="Interaktywny atlas całej wyprawy"><image href="./atlas-srodziemia.jpg" x="0" y="0" width="1076" height="716" preserveAspectRatio="none"/><rect x="0" y="0" width="1076" height="716" fill="#081713" opacity=".24"/><path d="${path}" fill="none" stroke="#0a1614" stroke-width="12" opacity=".9" stroke-linecap="round"/><path d="${path}" fill="none" stroke="#dec99a" stroke-width="4" opacity=".8" stroke-dasharray="2 11" stroke-linecap="round"/><path d="${path}" fill="none" stroke="#e9bb60" stroke-width="8" stroke-dasharray="${currentLength} ${totalLength}" stroke-linecap="round" style="filter:drop-shadow(0 0 6px #e6ac49)"/><path d="${path}" fill="none" stroke="#fff0c5" stroke-width="2.5" stroke-dasharray="${currentLength} ${totalLength}" stroke-linecap="round"/>${anchors}<circle cx="${current.x}" cy="${current.y}" r="14" fill="#0f1e1b" stroke="#ffe5a7" stroke-width="3.5"/><circle cx="${current.x}" cy="${current.y}" r="5" fill="#ffdaa0"/></svg>`;
+}
+function setMapBrowse(n){
+ mapBrowse=n===0?5:n;
+ mapZoom=1;mapPan={x:0,y:0};
+ render();
+}
+function changeMapBrowse(direction){
+ const active=mapBrowse||chapterByDistance(Math.min(mapK(),TOTAL-.01)).id;
+ const nextIndex=((active-1+direction+5)%5)+1;
+ setMapBrowse(nextIndex);
+}
 function renderMap(){
- const distance=mapK(),chapterMeta=chapterByDistance(Math.min(distance,TOTAL-0.01)),chapter=chapterMeta.id;
+ const distance=mapK(),chapterMeta=chapterByDistance(Math.min(distance,TOTAL-0.01)),chapter=chapterMeta.id,shown=mapBrowse||chapter,allMap=shown===5,shownMeta=CHAPTERS[shown-1]||chapterMeta;
  const goal=[737,1481,2107,2863][chapter-1],start=[0,737,1481,2107][chapter-1];
  const chapterDistance=Math.max(0,distance-start);
  const nextStop=next();
@@ -189,8 +215,9 @@ function renderMap(){
  const note=lastEntry?esc(lastEntry.text):nextStop?`Droga wiedzie ku kolejnemu odkryciu. Jeszcze ${fmt(nextStopDistance)} km dzieli Cię od ${esc(nextStop.name)}.`:'Dotarłaś do kresu Drogi Pierścienia. Kronika zachowa tę wyprawę w całości.';
  const chapterMapSrc=MAP_IMAGES[chapter]||MAP_IMAGES[4];
  const chapterMapAlt=MAP_ALTS[chapter]||'Ilustrowana mapa wyprawy';
- return `${backupBanner()}<section class="journey-intro"><div class="journey-rule"><span>✦</span><small>ROZDZIAŁ ${chapterRoman} · WYPRAWA I</small><span>✦</span></div><h2>${names[chapter-1]}</h2><p>${esc(chapterMeta.intro)}</p></section>
- <div class="map-frame"><div class="map-stage" id="mapStage"><div class="map-art" id="mapArt">${chapter===1?`<img class="map-landscape atlas-image" src="${chapterMapSrc}" alt="${chapterMapAlt}" draggable="false">${atlasMapSvg()}`:`<img class="map-landscape" src="${chapterMapSrc}" alt="${chapterMapAlt}" draggable="false">${mapSvg()}`}</div><div class="map-tools${chapter===1?' atlas-tools':''}"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div></div><div class="map-frame-caption"><span>✧ AKTUALNY SZLAK</span><span>DROGA OŻYWA WRAZ Z POSTĘPEM</span></div></div>
+ return `${backupBanner()}<section class="journey-intro"><div class="journey-rule"><span>✦</span><small>${allMap?'CAŁA WYPRAWA':`ROZDZIAŁ ${shownMeta.roman} · WYPRAWA I`}</small><span>✦</span></div><h2>${allMap?'Atlas całej podróży':esc(shownMeta.title)}</h2><p>${allMap?'Wszystkie miejsca, pełna trasa i droga, którą już przebyłaś.':esc(shownMeta.intro)}</p></section>
+ <div class="world-nav" aria-label="Przeglądaj mapy"><button id="mapPrevious" aria-label="Poprzednia mapa">‹</button><span>${allMap?'Całe Śródziemie':`Rozdział ${shownMeta.roman} / IV`}</span><button id="mapNext" aria-label="Następna mapa">›</button><button id="mapOverview" class="world-overview-btn" aria-label="Pokaż całą trasę">Cała trasa</button></div>
+ <div class="map-frame"><div class="map-stage ${allMap?'world-stage':''}" id="mapStage"><div class="map-art" id="mapArt">${allMap?worldMapSvg():shown===1?`<img class="map-landscape atlas-image" src="${MAP_IMAGES[1]}" alt="${MAP_ALTS[1]}" draggable="false">${atlasMapSvg()}`:`<img class="map-landscape" src="${MAP_IMAGES[shown]}" alt="${MAP_ALTS[shown]}" draggable="false">${mapSvg()}`}</div><div class="map-tools${shown===1?' atlas-tools':''}"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div></div><div class="map-frame-caption"><span>${allMap?'✧ CAŁA WYPRAWA':'✧ PRZEGLĄD SZLAKU'}</span><span>Przesuń palcem w lewo lub prawo</span></div></div>
  <section class="journey-dashboard">
  <div class="journey-heading"><div><small class="eyebrow">TWOJA WĘDRÓWKA</small><h2>Droga do ${esc(chapterGoalName)}</h2></div><span class="journey-medallion">✧</span></div>
  <div class="journey-mainstats"><div><span class="journey-number">${fmt(chapterDistance)}<small> / ${fmt(goal-start)} km</small></span><p>Przebyty szlak w tym rozdziale</p></div><div class="journey-percent">${pct.toFixed(1).replace('.',',')}<span>%</span></div></div>
@@ -344,7 +371,8 @@ function syncSeals(silent){
  for(const s of SEALS)if(!data.seals[s.id]&&s.test()){data.seals[s.id]=new Date().toISOString();if(!silent&&!first)fresh.push(s)}
  localStorage.setItem(KEY,JSON.stringify(data));return fresh;
 }
-const sealHtml=(s,earned,big)=>`<div class="seal ${earned?'earned':'locked'} ${big?'seal-big':''}" aria-hidden="true"><span>${s.sym}</span></div>`;
+const BADGE_ART={'krok':'./badge-art-01.png','bieg':'./badge-art-01.png','piatka':'./badge-art-08.png','dziesiatka':'./badge-art-08.png','wytrwalosc':'./badge-art-05.png','zrywy':'./badge-art-02.png','proba':'./badge-art-06.png','dziesiec':'./badge-art-11.png','piecdziesiat':'./badge-art-11.png','seria4':'./badge-art-03.png','seria12':'./badge-art-09.png','km50':'./badge-art-10.png','km100':'./badge-art-08.png','km500':'./badge-art-02.png','rivendell':'./badge-art-03.png','lorien':'./badge-art-04.png','rauros':'./badge-art-07.png','orodruina':'./badge-art-09.png'};
+const sealHtml=(s,earned,big)=>`<div class="seal ${earned?'earned':'locked'} ${big?'seal-big':''}" aria-hidden="true">${BADGE_ART[s.id]?`<img class="badge-art" src="${BADGE_ART[s.id]}" alt="">`:`<span>${s.sym}</span>`}</div>`;
 
 /* ---- Ekran odkrycia ---- */
 let revealQueue=[];
@@ -389,7 +417,7 @@ function celebrate(before){
  const after=travel(),reached=stops.filter(s=>s.km>before&&s.km<=after),seals=syncSeals(false);
  revealQueue=[...reached.map(stop=>({type:'stop',stop})),...seals.map(seal=>({type:'seal',seal}))];
  if(after<=before){render();if(revealQueue.length)setTimeout(showReveal,300);return}
- view='map';focused=null;displayK=before;render();
+ view='map';mapBrowse=null;focused=null;displayK=before;render();
  const fr=$('.map-frame');if(fr){const y=fr.getBoundingClientRect().top+scrollY-Math.max(12,(innerHeight-fr.offsetHeight)/2-40);scrollTo({top:Math.max(0,y),behavior:reduceMotion()?'auto':'smooth'})}
  setTimeout(()=>animateTrail(before,after,()=>{render();if(revealQueue.length)setTimeout(showReveal,450)}),700);
 }
@@ -428,10 +456,10 @@ function sealSheet(id){
  sheet(`<div class="seal-sheet">${sealHtml(s,!!e,true)}<small class="eyebrow">${e?'ODZNAKA ZDOBYTA · '+new Date(e).toLocaleDateString('pl-PL'):'ODZNAKA DO ZDOBYCIA'}</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p></div>`);
 }
 
-function render(){let labels={map:'Droga Pierścienia',training:'Dziennik treningów',chronicle:'Kronika podróży',growth:'Twoja kondycja'};$('#pageTitle').textContent=labels[view];$('#eyebrow').textContent=view==='map'?'WYPRAWA I • DROGA FRODA':'ŚRÓDZIEMIE • WYPRAWA I';$('#screen').innerHTML={map:renderMap,training:renderTraining,chronicle:renderChronicle,growth:renderGrowth}[view]();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#newWorkout')?.addEventListener('click',()=>workoutSheet());$('#miImportButton')?.addEventListener('click',miImporter);if(view==='map')attachMap();bindBanner();bindGrowth();$('#journalToggle')?.addEventListener('click',()=>{journalAll=!journalAll;render()})}
+function render(){let labels={map:'Droga Pierścienia',training:'Dziennik treningów',chronicle:'Kronika podróży',growth:'Twoja kondycja'};$('#pageTitle').textContent=labels[view];$('#eyebrow').textContent=view==='map'?'WYPRAWA I • DROGA FRODA':'ŚRÓDZIEMIE • WYPRAWA I';$('#screen').innerHTML={map:renderMap,training:renderTraining,chronicle:renderChronicle,growth:renderGrowth}[view]();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#newWorkout')?.addEventListener('click',()=>workoutSheet());$('#miImportButton')?.addEventListener('click',miImporter);if(view==='map'){attachMap();$('#mapPrevious')?.addEventListener('click',()=>changeMapBrowse(-1));$('#mapNext')?.addEventListener('click',()=>changeMapBrowse(1));$('#mapOverview')?.addEventListener('click',()=>setMapBrowse(5));}bindBanner();bindGrowth();$('#journalToggle')?.addEventListener('click',()=>{journalAll=!journalAll;render()})}
 function attachMap(){
  const art=$('#mapArt'),stage=$('#mapStage');if(!art||!stage)return;
- const fingers=new Map();let drag=null,pinch=null;
+ const fingers=new Map();let drag=null,pinch=null,swipe=null;
  const clamp=()=>{const mx=stage.clientWidth*(mapZoom-1)/2,my=stage.clientHeight*(mapZoom-1)/2;mapPan.x=Math.max(-mx,Math.min(mx,mapPan.x));mapPan.y=Math.max(-my,Math.min(my,mapPan.y))};
  const apply=()=>{clamp();art.style.transform=`translate(${mapPan.x}px,${mapPan.y}px) scale(${mapZoom})`;stage.style.touchAction=mapZoom>1?'none':'pan-y'};
  const zoomTo=(z)=>{mapZoom=Math.max(1,Math.min(3.5,z));if(mapZoom===1)mapPan={x:0,y:0};apply()};
@@ -441,6 +469,7 @@ function attachMap(){
   if(e.target.closest('button'))return;
   if(e.target.closest('[data-stop]'))return;
   fingers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(fingers.size===1&&mapZoom<=1)swipe={pointerId:e.pointerId,x:e.clientX,y:e.clientY};
   if(fingers.size===2){const p=[...fingers.values()];pinch={distance:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),zoom:mapZoom};drag=null}
   else if(mapZoom>1)drag={x:e.clientX,y:e.clientY,px:mapPan.x,py:mapPan.y};
   try{stage.setPointerCapture(e.pointerId)}catch{}
@@ -451,7 +480,7 @@ function attachMap(){
   if(fingers.size===2&&pinch){const p=[...fingers.values()];zoomTo(pinch.zoom*Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)/Math.max(1,pinch.distance))}
   else if(drag&&mapZoom>1){mapPan={x:drag.px+e.clientX-drag.x,y:drag.py+e.clientY-drag.y};apply()}
  };
- const finish=e=>{fingers.delete(e.pointerId);drag=null;pinch=null};
+ const finish=e=>{const move=swipe&&swipe.pointerId===e.pointerId&&fingers.size===1&&mapZoom<=1?{dx:e.clientX-swipe.x,dy:e.clientY-swipe.y}:null;fingers.delete(e.pointerId);drag=null;pinch=null;swipe=null;if(move&&Math.abs(move.dx)>65&&Math.abs(move.dx)>Math.abs(move.dy)*1.25)changeMapBrowse(move.dx<0?1:-1)};
  stage.onpointerup=finish;stage.onpointercancel=finish;
  stage.onwheel=e=>{if(!e.ctrlKey)return;e.preventDefault();zoomTo(mapZoom+(e.deltaY<0?.15:-.15))};
 }

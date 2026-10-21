@@ -28,3 +28,10 @@ Dystans i czas są rozpoznawane z osobnych obszarów zrzutu Mi Fitness. Jeśli r
 
 
 Aktualizacja v3.3: odświeżona kolorystyka kroniki, nowe odznaki w miejsce pieczęci oraz poprawiona logika opisów w dzienniku wyprawy.
+
+## v3.4 — pełny szlak
+Na mapie przesuń palcem w lewo/prawo, aby zobaczyć rozdziały I–IV i widok „Cała trasa”. Przycisk „Cała trasa” działa z każdego rozdziału. Złota linia oznacza przebytą trasę, przerywana dalszy szlak. Atlas zbiorczy jest schematem opartym na kolejności punktów, a nie dokładną kartografią Śródziemia. Powiększ mapę, aby otwierać punkty. Brakujące ilustracje rozdziałów II–IV pozostają bez grafik zastępczych.
+
+
+## v3.5 — Atlas i odznaki
+Atlas-srodziemia.jpg to ilustracyjna, fantastyczna mapa w stylu Śródziemia; mapa jest stylizowana, a nie geodezyjnie dokładna. Warstwa wektorowa pokazuje 20 punktów, przebytą trasę i pozycję wynikającą z danych treningowych. Włącz widok „Cała trasa”. Dwanaście ilustracji medalionów jest mapowanych na 18 osiągnięć, więc niektóre symbole są współdzielone.
