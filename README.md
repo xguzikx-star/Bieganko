@@ -39,3 +39,6 @@ Atlas-srodziemia.jpg to ilustracyjna, fantastyczna mapa w stylu Śródziemia; ma
 
 ## v3.7 — spójność map
 Rozdziały II–IV są obecnie widokami tego samego atlasu (`atlas-srodziemia.jpg`) i korzystają z jednej tablicy `WORLD_POINTS`. Nie trzeba wgrywać dawnych grafik `chapter-2`, `chapter-3`, `chapter-4`. Atlas ma charakter ilustracyjny, nie jest geodezyjnie wierną mapą Tolkiena. Rozdział I pozostaje z pierwotną ilustracją Eriadoru.
+
+
+Aktualizacja v3.8: dodane ilustracyjne karty rozdziałów w górnej części mapy, w stylu zintegrowanej karty z gradientem.

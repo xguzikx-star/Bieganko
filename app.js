@@ -11,6 +11,7 @@ const MAP_ALTS={
   3:'Ilustrowana mapa Anduiny od Lothlórien do Rauros',
   4:'Ilustrowana mapa ostatniego etapu do Góry Przeznaczenia'
 };
+const HERO_IMAGES={1:'./hero-ch1.png',2:'./hero-ch2.png',3:'./hero-ch3.png',4:'./hero-ch4.png'};
 const TOTAL=2863, SCALE=3, KEY='srodziemie.v1';
 // Distances between verified chapter anchors are provisional allocations; detail atlas awaits source-by-source verification.
 const stops=[
@@ -238,9 +239,10 @@ function renderMap(){
  const note=lastEntry?esc(lastEntry.text):nextStop?`Droga wiedzie ku kolejnemu odkryciu. Jeszcze ${fmt(nextStopDistance)} km dzieli Cię od ${esc(nextStop.name)}.`:'Dotarłaś do kresu Drogi Pierścienia. Kronika zachowa tę wyprawę w całości.';
  const chapterMapSrc=MAP_IMAGES[chapter]||MAP_IMAGES[4];
  const chapterMapAlt=MAP_ALTS[chapter]||'Ilustrowana mapa wyprawy';
- return `${backupBanner()}<section class="journey-intro"><div class="journey-rule"><span>✦</span><small>${allMap?'CAŁA WYPRAWA':`ROZDZIAŁ ${shownMeta.roman} · WYPRAWA I`}</small><span>✦</span></div><h2>${allMap?'Atlas całej podróży':esc(shownMeta.title)}</h2><p>${allMap?'Wszystkie miejsca, pełna trasa i droga, którą już przebyłaś.':esc(shownMeta.intro)}</p></section>
+ const chapterHero = allMap ? '' : `<section class="chapter-hero"><img src="${HERO_IMAGES[shown]}" alt="Karta rozdziału ${shownMeta.roman}: ${esc(shownMeta.title)}" loading="eager" draggable="false"></section>`;
+ return `${backupBanner()}${allMap?`<section class="journey-intro"><div class="journey-rule"><span>✦</span><small>CAŁA WYPRAWA</small><span>✦</span></div><h2>Atlas całej podróży</h2><p>Wszystkie miejsca, pełna trasa i droga, którą już przebyłaś.</p></section>`:chapterHero}
  <div class="world-nav" aria-label="Przeglądaj mapy"><button id="mapPrevious" aria-label="Poprzednia mapa">‹</button><span>${allMap?'Całe Śródziemie':`Rozdział ${shownMeta.roman} / IV`}</span><button id="mapNext" aria-label="Następna mapa">›</button><button id="mapOverview" class="world-overview-btn" aria-label="Pokaż całą trasę">Cała trasa</button></div>
- <div class="map-frame"><div class="map-stage ${allMap?'world-stage':''}" id="mapStage"><div class="map-art" id="mapArt">${allMap?worldMapSvg():shown===1?`<img class="map-landscape atlas-image" src="${MAP_IMAGES[1]}" alt="${MAP_ALTS[1]}" draggable="false">${atlasMapSvg()}`:`${sharedAtlasSvg(shown)}`}</div><div class="map-tools${shown===1?' atlas-tools':''}"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div></div><div class="map-frame-caption"><span>${allMap?'✧ CAŁA WYPRAWA':'✧ PRZEGLĄD SZLAKU'}</span><span>Przesuń palcem w lewo lub prawo</span></div></div>
+ <div class="map-frame${allMap?'':' map-frame-secondary'}"><div class="map-stage ${allMap?'world-stage':''}" id="mapStage"><div class="map-art" id="mapArt">${allMap?worldMapSvg():shown===1?`<img class="map-landscape atlas-image" src="${MAP_IMAGES[1]}" alt="${MAP_ALTS[1]}" draggable="false">${atlasMapSvg()}`:`${sharedAtlasSvg(shown)}`}</div><div class="map-tools${shown===1?' atlas-tools':''}"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div></div><div class="map-frame-caption"><span>${allMap?'✧ CAŁA WYPRAWA':'✧ MAPA INTERAKTYWNA'}</span><span>Przesuń palcem w lewo lub prawo</span></div></div>
  <section class="journey-dashboard">
  <div class="journey-heading"><div><small class="eyebrow">TWOJA WĘDRÓWKA</small><h2>Droga do ${esc(chapterGoalName)}</h2></div><span class="journey-medallion">✧</span></div>
  <div class="journey-mainstats"><div><span class="journey-number">${fmt(chapterDistance)}<small> / ${fmt(goal-start)} km</small></span><p>Przebyty szlak w tym rozdziale</p></div><div class="journey-percent">${pct.toFixed(1).replace('.',',')}<span>%</span></div></div>

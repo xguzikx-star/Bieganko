@@ -255,3 +255,11 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .unified-atlas-svg{width:100%;height:100%;display:block;overflow:hidden}
 .map-stage:not(:has(.atlas-image)) .unified-atlas-svg{width:100%;height:100%}
 .unified-atlas-svg .chapter-label{fill:#fff0ca;stroke:#111813;stroke-width:4px;paint-order:stroke;stroke-linejoin:round;pointer-events:none;font-family:Marcellus,Georgia,serif}
+
+
+/* v3.8 hero chapter cards */
+.chapter-hero{margin:10px 10px 12px;border:1px solid #b8945f92;border-radius:20px;overflow:hidden;box-shadow:0 16px 36px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);background:linear-gradient(180deg,#08110f,#0d1714)}
+.chapter-hero img{display:block;width:100%;height:auto;aspect-ratio:818/1456;object-fit:cover}
+.map-frame-secondary{margin-top:6px}
+.map-frame-secondary .map-frame-caption{background:linear-gradient(90deg,#11211c,#0a1412)}
+@media(max-width:430px){.chapter-hero{margin:8px 9px 12px;border-radius:18px}}
