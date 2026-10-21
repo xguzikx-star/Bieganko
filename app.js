@@ -42,29 +42,30 @@ const CHAPTERS=[
  {id:4,roman:'IV',title:'W cieniu Mordoru',goal:2863,start:2107,route:'Do Góry Przeznaczenia',intro:'Ostatni etap prowadzi przez Emyn Muil, Martwe Bagna i popioły Mordoru ku Orodruinie.'}
 ];
 const STOP_ART={
- 'Hobbiton':'./stop-hobbiton.jpg?v=2.3',
- 'Stary Las':'./stop-stary-las.jpg?v=2.3',
- 'Bree':'./stop-bree.jpg?v=2.3',
- 'Komarowe Bagna':'./stop-komarowe-bagna.jpg?v=2.3',
- 'Wichrowy Czub':'./stop-wichrowy-czub.jpg?v=2.3',
- 'Bród Bruinen':'./stop-brod-bruinen.jpg?v=2.3',
- 'Rivendell':'./stop-rivendell.jpg?v=2.3',
- 'Hollin':'./stop-hollin.jpg?v=2.3',
- 'Caradhras':'./stop-caradhras.jpg?v=2.3',
- 'Moria':'./stop-moria.jpg?v=2.3',
- 'Lothlórien':'./stop-lothlorien.jpg?v=2.3',
- 'Anduina':'./stop-anduina.jpg?v=2.3',
- 'Argonath':'./stop-argonath.jpg?v=2.3',
- 'Rauros':'./stop-rauros.jpg?v=2.3',
- 'Emyn Muil':'./stop-emyn-muil.jpg?v=2.3',
- 'Martwe Bagna':'./stop-martwe-bagna.jpg?v=2.3',
- 'Ithilien':'./stop-ithilien.jpg?v=2.3',
- 'Cirith Ungol':'./stop-cirith-ungol.jpg?v=2.3',
- 'Gorgoroth':'./stop-gorgoroth.jpg?v=2.3',
- 'Góra Przeznaczenia':'./stop-gora-przeznaczenia.jpg?v=2.3'
+ 'Hobbiton':'./eriador-atlas.jpg',
+ 'Stary Las':'./eriador-atlas.jpg',
+ 'Bree':'./stop-bree.jpg',
+ 'Komarowe Bagna':'./stop-komarowe-bagna.jpg',
+ 'Wichrowy Czub':'./stop-wichrowy-czub.jpg',
+ 'Bród Bruinen':'./eriador-atlas.jpg',
+ 'Rivendell':'./chapter-2-przez-gory-i-mroki.jpg',
+ 'Hollin':'./chapter-2-przez-gory-i-mroki.jpg',
+ 'Caradhras':'./chapter-2-przez-gory-i-mroki.jpg',
+ 'Moria':'./chapter-2-przez-gory-i-mroki.jpg',
+ 'Lothlórien':'./stop-lothlorien.jpg',
+ 'Anduina':'./stop-anduina.jpg',
+ 'Argonath':'./chapter-3-nurtem-wielkiej-rzeki.jpg',
+ 'Rauros':'./chapter-3-nurtem-wielkiej-rzeki.jpg',
+ 'Emyn Muil':'./chapter-4-w-cieniu-mordoru.jpg',
+ 'Martwe Bagna':'./chapter-4-w-cieniu-mordoru.jpg',
+ 'Ithilien':'./stop-ithilien.jpg',
+ 'Cirith Ungol':'./chapter-4-w-cieniu-mordoru.jpg',
+ 'Gorgoroth':'./chapter-4-w-cieniu-mordoru.jpg',
+ 'Góra Przeznaczenia':'./chapter-4-w-cieniu-mordoru.jpg'
 };
-const stopArt=s=>STOP_ART[s.name]||STOP_ART['Hobbiton'];
+const stopArt=s=>STOP_ART[s.name]||'./atlas-srodziemia.jpg';
 const chapterByDistance=d=>CHAPTERS.find(c=>d<c.goal)||CHAPTERS[CHAPTERS.length-1];
+
 const chapterByStop=km=>CHAPTERS.find(c=>km<=c.goal)||CHAPTERS[CHAPTERS.length-1];
 const getDefault=()=>({schema:1,workouts:[],created:new Date().toISOString()});
 function load(){try{const j=JSON.parse(localStorage.getItem(KEY));return j&&Array.isArray(j.workouts)?j:getDefault()}catch{return getDefault()}}
@@ -77,8 +78,20 @@ function toast(message){document.querySelector('.toast')?.remove();let n=documen
 function closeSheet(){$('#overlay').hidden=true;$('#sheet').innerHTML=''}
 function sheet(html){$('#sheet').innerHTML='<button class="close" aria-label="Zamknij" id="closeSheet">×</button>'+html;$('#overlay').hidden=false;$('#closeSheet').onclick=closeSheet}
 
+
+function markStopViewed(name){
+ if(!name)return;
+ data.viewedStops=data.viewedStops||{};
+ if(data.viewedStops[name])return;
+ data.viewedStops[name]=new Date().toISOString();
+ const fresh=syncSeals(true);
+ try{localStorage.setItem(KEY,JSON.stringify(data))}catch{}
+ if(fresh.length)toast(`Odblokowano odznakę: ${fresh[0].name}`);
+}
+
 function goToStop(i){
  const s=stops[i],locked=s.km>travel(),art=stopArt(s),remaining=fmt(Math.max(0,(s.km-travel())/SCALE));
+ if(!locked)markStopViewed(s.name);
  const chip=locked?'NIEODKRYTA KARTA':(s.kind==='major'?'KAMIEŃ MILOWY':'ODKRYTE MIEJSCE');
  const lead=locked
   ?`Szlak odsłoni to miejsce, gdy pokonasz jeszcze <b>${remaining} km</b> swojej drogi.`
@@ -140,10 +153,11 @@ function atlasMapSvg(){
 
 // v1.9.1: chapter II–IV pins are placed in the painted image's own pixel space (1086×1448),
 // so the SVG overlay and the illustration scale and crop identically.
+
 const CHAPTER_ART={
- 2:{first:6,last:10,pts:[[905,95],[365,395],[640,175],[785,745],[240,955]]},
- 3:{first:10,last:13,pts:[[225,205],[470,430],[815,700],[880,1080]]},
- 4:{first:13,last:19,pts:[[905,1235],[700,1170],[835,865],[395,975],[345,445],[680,310],[905,125]]}
+ 2:{first:6,last:10,pts:[[930,120],[210,470],[560,235],[700,870],[165,1085]]},
+ 3:{first:10,last:13,pts:[[140,150],[470,430],[785,720],[885,1190]]},
+ 4:{first:13,last:19,pts:[[80,90],[260,255],[330,545],[235,915],[650,910],[790,320],[945,105]]}
 };
 function sampleRoute(pts){
  // Catmull-Rom style cubic segments (same as routeCurve) sampled into a polyline with cumulative length per stop.
@@ -346,33 +360,54 @@ function journalEntries(){
 
 /* ---- Pieczęcie ---- */
 function maxWeekStreak(){const keys=[...new Set(data.workouts.map(w=>weekKey(w.date)))];if(!keys.length)return 0;const mondays=[...new Set(data.workouts.map(w=>{const d=new Date(w.date+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)}))].sort();let best=1,run=1;for(let i=1;i<mondays.length;i++){const gap=Math.round((new Date(mondays[i])-new Date(mondays[i-1]))/864e5);run=gap===7?run+1:1;best=Math.max(best,run)}return best}
+
 const SEALS=[
- {id:'krok',sym:'◇',name:'Pierwszy ślad',desc:'Zapisany pierwszy trening. Każda wielka droga zaczyna się od pierwszego kroku.',test:()=>data.workouts.length>=1},
- {id:'bieg',sym:'➶',name:'Pierwszy bieg',desc:'Pierwszy trening typu bieg.',test:()=>data.workouts.some(w=>w.type==='Bieg')},
- {id:'piatka',sym:'5',name:'Piątka',desc:'Co najmniej 5 km w jednym treningu.',test:()=>data.workouts.some(w=>+w.km>=5)},
- {id:'dziesiatka',sym:'10',name:'Długi odcinek',desc:'Co najmniej 10 km w jednym treningu.',test:()=>data.workouts.some(w=>+w.km>=10)},
+ {id:'krok',sym:'◇',name:'Pierwszy ślad',desc:'Zapisany pierwszy trening. Od tego kroku zaczyna się Twoja własna wyprawa.',test:()=>data.workouts.length>=1},
+ {id:'bieg',sym:'➶',name:'Biegacz z Shire',desc:'Pierwszy trening typu bieg.',test:()=>data.workouts.some(w=>w.type==='Bieg')},
+ {id:'piatka',sym:'5',name:'Mały etap',desc:'Co najmniej 5 km w jednym treningu.',test:()=>data.workouts.some(w=>+w.km>=5)},
+ {id:'dziesiatka',sym:'10',name:'Długi marsz',desc:'Co najmniej 10 km w jednym treningu.',test:()=>data.workouts.some(w=>+w.km>=10)},
  {id:'wytrwalosc',sym:'◎',name:'Równy oddech',desc:'Nieprzerwany bieg trwający co najmniej 20 minut.',test:()=>data.workouts.some(w=>+w.longestRun>=20)},
- {id:'zrywy',sym:'≈',name:'Pięć zrywów',desc:'Pięć treningów interwałowych.',test:()=>data.workouts.filter(w=>w.type==='Interwały').length>=5},
- {id:'proba',sym:'⌖',name:'Próba porównawcza',desc:'Pierwszy trening oznaczony jako próba porównawcza.',test:()=>data.workouts.some(w=>w.test)},
- {id:'dziesiec',sym:'☷',name:'Dziesięć zapisów',desc:'Dziesięć zapisanych treningów.',test:()=>data.workouts.length>=10},
- {id:'piecdziesiat',sym:'❖',name:'Pół setki',desc:'Pięćdziesiąt zapisanych treningów.',test:()=>data.workouts.length>=50},
- {id:'seria4',sym:'◈',name:'Cztery tygodnie',desc:'Treningi w czterech kolejnych tygodniach.',test:()=>maxWeekStreak()>=4},
+ {id:'zrywy',sym:'≈',name:'Sztuka tempa',desc:'Pięć treningów interwałowych.',test:()=>data.workouts.filter(w=>w.type==='Interwały').length>=5},
+ {id:'obiezyswiat',sym:'✶',name:'Obieżyświat',desc:'Odwiedzone wszystkie ilustracje lokacji. Gwiazda Eärendila świeci nad Twoją kroniką.',test:()=>stops.every(s=>!!data.viewedStops?.[s.name])},
+ {id:'dziesiec',sym:'☷',name:'Kronika się zapełnia',desc:'Dziesięć zapisanych treningów.',test:()=>data.workouts.length>=10},
+ {id:'piecdziesiat',sym:'❖',name:'Kronikarz szlaku',desc:'Pięćdziesiąt zapisanych treningów.',test:()=>data.workouts.length>=50},
+ {id:'seria4',sym:'◈',name:'Cztery tygodnie na szlaku',desc:'Treningi w czterech kolejnych tygodniach.',test:()=>maxWeekStreak()>=4},
  {id:'seria12',sym:'✺',name:'Pora roku w drodze',desc:'Treningi w dwunastu kolejnych tygodniach.',test:()=>maxWeekStreak()>=12},
- {id:'km50',sym:'50',name:'Pięćdziesiąt kilometrów',desc:'50 km Twojej drogi łącznie.',test:()=>real()>=50},
- {id:'km100',sym:'100',name:'Setka',desc:'100 km Twojej drogi łącznie.',test:()=>real()>=100},
- {id:'km500',sym:'500',name:'Pięćset',desc:'500 km Twojej drogi łącznie.',test:()=>real()>=500},
+ {id:'km50',sym:'50',name:'Pięćdziesiąt kilometrów',desc:'Łącznie przebiegłaś lub przeszłaś 50 km.',test:()=>real()>=50},
+ {id:'km100',sym:'100',name:'Sto kilometrów',desc:'Łącznie przebiegłaś lub przeszłaś 100 km.',test:()=>real()>=100},
+ {id:'km500',sym:'500',name:'Długa droga',desc:'Łącznie przebiegłaś lub przeszłaś 500 km.',test:()=>real()>=500},
  {id:'rivendell',sym:'✧',name:'Dom Elronda',desc:'Ukończony rozdział I — dotarcie do Rivendell.',test:()=>travel()>=737},
- {id:'lorien',sym:'❋',name:'Złoty las',desc:'Ukończony rozdział II — dotarcie do Lothlórien.',test:()=>travel()>=1481},
- {id:'rauros',sym:'≋',name:'Wodospady Rauros',desc:'Ukończony rozdział III.',test:()=>travel()>=2107},
- {id:'orodruina',sym:'◉',name:'Kres drogi',desc:'Dotarcie do Góry Przeznaczenia.',test:()=>travel()>=TOTAL}
+ {id:'lorien',sym:'❋',name:'Złoty Las',desc:'Ukończony rozdział II — dotarcie do Lothlórien.',test:()=>travel()>=1481},
+ {id:'rauros',sym:'≋',name:'Strażnicy Anduiny',desc:'Ukończony rozdział III — przeprawa obok Argonath i dotarcie do Rauros.',test:()=>travel()>=2107},
+ {id:'orodruina',sym:'◉',name:'Ogień Orodruiny',desc:'Dotarcie do Góry Przeznaczenia.',test:()=>travel()>=TOTAL}
 ];
 function syncSeals(silent){
  const first=!data.seals;data.seals=data.seals||{};const fresh=[];
  for(const s of SEALS)if(!data.seals[s.id]&&s.test()){data.seals[s.id]=new Date().toISOString();if(!silent&&!first)fresh.push(s)}
  localStorage.setItem(KEY,JSON.stringify(data));return fresh;
 }
-const BADGE_ART={'krok':'./badge-art-01.png','bieg':'./badge-art-01.png','piatka':'./badge-art-08.png','dziesiatka':'./badge-art-08.png','wytrwalosc':'./badge-art-05.png','zrywy':'./badge-art-02.png','proba':'./badge-art-06.png','dziesiec':'./badge-art-11.png','piecdziesiat':'./badge-art-11.png','seria4':'./badge-art-03.png','seria12':'./badge-art-09.png','km50':'./badge-art-10.png','km100':'./badge-art-08.png','km500':'./badge-art-02.png','rivendell':'./badge-art-03.png','lorien':'./badge-art-04.png','rauros':'./badge-art-07.png','orodruina':'./badge-art-09.png'};
+const BADGE_ART={
+ 'krok':'./badge-art-12.png',
+ 'bieg':'./badge-art-01.png',
+ 'piatka':'./badge-art-04.png',
+ 'dziesiatka':'./badge-art-05.png',
+ 'wytrwalosc':'./badge-art-10.png',
+ 'zrywy':'./badge-art-02.png',
+ 'obiezyswiat':'./badge-art-11.png',
+ 'dziesiec':'./badge-art-06.png',
+ 'piecdziesiat':'./badge-art-07.png',
+ 'seria4':'./badge-art-03.png',
+ 'seria12':'./badge-art-08.png',
+ 'km50':'./badge-art-04.png',
+ 'km100':'./badge-art-05.png',
+ 'km500':'./badge-art-07.png',
+ 'rivendell':'./badge-art-06.png',
+ 'lorien':'./badge-art-04.png',
+ 'rauros':'./badge-art-07.png',
+ 'orodruina':'./badge-art-09.png'
+};
 const sealHtml=(s,earned,big)=>`<div class="seal ${earned?'earned':'locked'} ${big?'seal-big':''}" aria-hidden="true">${BADGE_ART[s.id]?`<img class="badge-art" src="${BADGE_ART[s.id]}" alt="">`:`<span>${s.sym}</span>`}</div>`;
+
 
 /* ---- Ekran odkrycia ---- */
 let revealQueue=[];
