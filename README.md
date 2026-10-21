@@ -47,3 +47,7 @@ Ilustracja WebP jest teraz elementem HTML `<img>` pod nakładką SVG (Safari nie
 
 ## v0.5 — naprawa wyświetlania mapy
 Ilustracja mapy jest osadzona wewnątrz `app.js` jako obraz WebP w postaci data URL; nie wymaga już oddzielnego pliku z katalogu assets. Wgraj wszystkie pliki z ZIP do katalogu publikowanego przez GitHub Pages, w tym `app.js`, `index.html` i `sw.js`. Zmiana wersji cache to `srodziemie-v5`. Przed aktualizacją wyeksportuj historię treningów do JSON. Jeśli dalej wystąpi problem, sprawdź, czy GitHub Pages na pewno serwuje nowy plik `app.js`, otwierając jego URL w przeglądarce.
+
+
+## Wersja 0.6
+Pierwszy rozdział wykorzystuje bezpośrednio zatwierdzony kadr atlasu jako nieedytowalne tło. Klikalne znaczniki i aktualna pozycja są nakładane wektorowo. Teksty i złota linia będące częścią obrazu pozostają rastrowe — dokładne rozdzielenie wymaga odrębnej czystej ilustracji mapy. Historia treningów pozostaje w localStorage pod dotychczasowym kluczem.
