@@ -39,3 +39,7 @@ Przed podmianą plików na GitHubie wyeksportuj kopię treningów z Ustawień. K
 ## Wersja 0.3 — nowy krajobraz
 
 Podmieniono tło pierwszego rozdziału na osobny obraz malarski w `assets/eriador-landscape.webp`. Trasa i znaczniki pozostają interaktywną warstwą SVG w `app.js`. Późniejsze rozdziały mają roboczy układ i wymagają osobnych ilustracji oraz zatwierdzenia geografii. Wymiana plików nie czyści danych zapisanych w localStorage, lecz przed aktualizacją zalecamy eksport JSON.
+
+
+## v0.4 — naprawa mapy iPhone
+Ilustracja WebP jest teraz elementem HTML `<img>` pod nakładką SVG (Safari nie musi pobierać zewnętrznego obrazu z wnętrza SVG). Trasa jest prowadzona krzywymi Béziera, SVG pozostaje interaktywne. Cache PWA podniesiony do srodziemie-v4. Zachowany klucz danych localStorage `srodziemie.v1`.

@@ -23,3 +23,11 @@
 .map-tools{right:12px;top:15px}
 .map-tools button{width:42px;height:42px}
 @media(max-width:400px){.map-legend{max-width:63%}.map-legend strong{font-size:14px}.map-legend p{font-size:10px}.map-art .map-label{font-size:16px}}
+
+/* v0.4: Safari-safe standalone raster beneath independent SVG */
+.map-art{overflow:hidden;isolation:isolate}
+.map-landscape{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.map-art>svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:auto}
+.map-stage.map-image-error{background:#23382d}
+.map-stage.map-image-error:after{content:"Nie udało się wczytać ilustracji. Sprawdź połączenie lub odśwież aplikację.";position:absolute;left:20%;top:48%;width:60%;z-index:2;background:#08150de0;border:1px solid #b99b61;padding:14px;color:#e9d5ad;text-align:center;font-size:13px;pointer-events:none}
+.map-art .map-label{font-size:14px;stroke-width:4px;paint-order:stroke}
