@@ -51,3 +51,10 @@ Ilustracja mapy jest osadzona wewnątrz `app.js` jako obraz WebP w postaci data 
 
 ## Wersja 0.6
 Pierwszy rozdział wykorzystuje bezpośrednio zatwierdzony kadr atlasu jako nieedytowalne tło. Klikalne znaczniki i aktualna pozycja są nakładane wektorowo. Teksty i złota linia będące częścią obrazu pozostają rastrowe — dokładne rozdzielenie wymaga odrębnej czystej ilustracji mapy. Historia treningów pozostaje w localStorage pod dotychczasowym kluczem.
+
+
+## v0.9 – ekran główny
+- Font Marcellus dla nagłówków i Inter dla interfejsu (online Google Fonts; offline fallback Georgia/system-ui).
+- Rozbudowany panel podróży pod mapą: rzeczywisty postęp rozdziału, odkrycia, ostatni trening, tygodniowa seria.
+- Mapa i interaktywny złoty szlak pozostają bez zmian.
+- Dane treningów pozostają na urządzeniu. Przed aktualizacją zrób eksport JSON.

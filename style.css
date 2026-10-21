@@ -46,3 +46,35 @@
 .atlas-progress{padding:19px 17px 17px;background:linear-gradient(160deg,#111b17,#07120f);border-top:1px solid #ae8a5088}
 .atlas-progress .progress{margin:11px 0 18px}
 @media(max-width:430px){.map-stage:has(.atlas-image) .map-tools button{width:32px;height:32px;font-size:17px}}
+
+/* v0.9 · odświeżona typografia i mapa wyprawy */
+:root{--gold:#d3b57e;--text:#f0e5cf}
+html,body,button,input,select,textarea{font-family:Inter,system-ui,-apple-system,sans-serif}
+h1,h2,h3,.top h1,.section-title,.mini-title,.hero-title,.sheet h2,.metrics strong,.journey-intro h2,.journey-heading h2,.journey-number,.journey-percent,.journey-next strong,.journey-stats strong{font-family:Marcellus,Georgia,serif;font-weight:400}
+.top{padding-bottom:8px}.top h1{font-size:26px;letter-spacing:.3px}
+.journey-intro{text-align:center;padding:12px 18px 16px;background:radial-gradient(ellipse at 50% 100%,#5b624022,transparent 75%)}
+.journey-intro h2{font-size:25px;font-weight:400;margin:8px 0 5px;color:#ead7a7;letter-spacing:.3px}
+.journey-intro p{color:#b7b9a4;font-size:11px;margin:0;letter-spacing:.35px}
+.journey-rule{display:flex;align-items:center;justify-content:center;gap:15px;color:#c9ad77}
+.journey-rule small{font-size:9px;letter-spacing:2.2px}.journey-rule span{font-size:13px}
+.map-frame{position:relative;margin:0 9px;border:1px solid #987c4d8c;box-shadow:0 12px 30px #0008,0 0 0 4px #101c17}
+.map-frame .map-stage:has(.atlas-image){border:0;aspect-ratio:1086/702;height:auto}
+.map-frame-caption{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#15271e,#0d1916);border-top:1px solid #b18b5366;color:#c7ae7c;letter-spacing:1.1px;font-size:8px;padding:9px 11px}
+.map-frame .map-tools{z-index:5}
+.journey-dashboard{margin:20px 12px 14px;padding:19px 17px 20px;background:radial-gradient(ellipse at 93% 0%,#4c4f302b,transparent 43%),linear-gradient(155deg,#1a2a23,#101c19 65%,#10201b);border:1px solid #aa8f5c86;border-radius:15px;box-shadow:0 10px 32px #0006;position:relative}
+.journey-dashboard:before{content:'✧';position:absolute;top:3px;right:13px;color:#d6b57c45;font-size:25px}
+.journey-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.journey-heading h2{color:#f0dfb8;font-size:22px;line-height:1.2;margin:7px 0 0}
+.journey-medallion{width:39px;height:39px;border:1px solid #9e895f;border-radius:50%;display:grid;place-items:center;font-size:25px;color:#d5b37e;flex-shrink:0}
+.journey-mainstats{display:flex;justify-content:space-between;align-items:end;margin:20px 0 9px;gap:8px}
+.journey-number{font-size:32px;color:#e3c58e;white-space:nowrap}.journey-number small{font-size:15px;color:#bdb8a4}
+.journey-mainstats p{font-size:10px;color:#aeb5a5;margin:4px 0 0}.journey-percent{font-size:34px;color:#f0dfb8;line-height:1}.journey-percent span{font-size:16px;color:#cfb784}
+.journey-progress{height:8px;border-radius:12px;background:#55625170;overflow:hidden;border:1px solid #b19a7055}
+.journey-progress div{height:100%;background:linear-gradient(90deg,#9a7b48,#ffdfa2);border-radius:12px;box-shadow:0 0 10px #e9c17b99}
+.journey-next{display:flex;gap:12px;align-items:center;background:#24362d9c;border:1px solid #8a825a6d;padding:13px;margin:19px 0 15px;border-radius:10px}
+.journey-next-icon{font-size:24px;color:#e0ba7f}.journey-next small{display:block;font-size:9px;letter-spacing:1.4px;color:#c9ac78}.journey-next strong{display:block;font-size:18px;margin:4px 0;color:#f0dfba}.journey-next p{font-size:11px;color:#b9bdaf;margin:0}
+.journey-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:6px 0 17px;border-bottom:1px solid #b6a07155}
+.journey-stats>div{text-align:center;min-width:0}.journey-stats span{display:block;color:#c9a771;font-size:19px;margin-bottom:4px}.journey-stats strong{display:block;font-size:18px;color:#eddfbf;white-space:nowrap}.journey-stats small{font-size:9px;color:#b2baaa}
+.journey-chronicle{padding:16px 0}.journey-chronicle>div{display:flex;justify-content:space-between;align-items:center;color:#d3af73}.journey-chronicle p{font-family:Marcellus,Georgia,serif;font-size:16px;color:#e6d9bd;line-height:1.45;margin:11px 0}.journey-chronicle>small{color:#b1b5a7;font-size:10px}
+.journey-add{margin-top:7px;font-size:14px;letter-spacing:.2px}
+@media(max-width:385px){.journey-number{font-size:27px}.journey-percent{font-size:29px}.journey-heading h2{font-size:20px}.journey-stats strong{font-size:16px}}
