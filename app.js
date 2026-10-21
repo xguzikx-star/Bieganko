@@ -164,9 +164,9 @@ const WORLD_POINTS=[
  [1090,760],[1195,685],[1325,630],[1380,540]
 ];
 const CHAPTER_CROPS={
- 2:[510,175,325,470],
- 3:[705,465,240,355],
- 4:[850,490,565,360]
+ 2:[495,135,410,465],
+ 3:[700,430,340,385],
+ 4:[845,375,565,640]
 };
 function sampleRoute(pts){
  // Catmull-Rom style cubic segments (same as routeCurve) sampled into a polyline with cumulative length per stop.
@@ -193,18 +193,28 @@ function routeDistanceGeometry(k,pts,segmentStops){
  }
  return {path:routeCurve(pts),current,done,total:r.total};
 }
+const CHAPTER_ROUTES={
+  2:{image:'./rozdzial-2-mapa.jpg', names:[6,7,8,9,10], points:[[91,172],[214,246],[407,102],[309,204],[632,198]]},
+  3:{image:'./rozdzial-3-mapa.jpg', names:[10,11,12,13], points:[[227,103],[360,148],[517,164],[637,311]]},
+  4:{image:'./rozdzial-4-mapa.jpg', names:[13,14,15,16,17,18,19], points:[[88,186],[267,115],[331,202],[402,300],[474,259],[604,226],[676,92]]}
+};
 function sharedAtlasSvg(chapter){
- const k=mapK(),overview=chapter===5;
- const first=overview?0:CHAPTERS[chapter-1].id===1?0:[0,6,10,13][chapter-1];
- const last=overview?19:[6,10,13,19][chapter-1];
- const cropped=overview?[0,0,1490,1000]:CHAPTER_CROPS[chapter];
- const pts=WORLD_POINTS.slice(first,last+1).map(([x,y])=>({x,y}));
- const stageStops=stops.slice(first,last+1),g=routeDistanceGeometry(k,pts,stageStops);
- const dots=pts.map((p,i)=>{const st=stageStops[i],seen=st.km<=k,major=st.kind==='major',r=major?11:8;
-  return `<g data-stop="${first+i}" role="button" tabindex="0" aria-label="${esc(st.name)}"><circle cx="${p.x}" cy="${p.y}" r="25" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${r+4}" fill="#091a16c9"/><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${seen?'#f2ce85':'#293932'}" stroke="#ffe1a9" stroke-width="2.5"/>${(major||overview&&i%2===0)?`<text x="${p.x+14}" y="${p.y-16}" class="chapter-label" style="font-size:${overview?19:23}px">${esc(st.name)}</text>`:''}</g>`}).join('');
- const position=k<stageStops[0].km?null:g.current;
- const v=cropped.join(' '),progress=g.done.toFixed(1),total=g.total.toFixed(1);
- return `<svg class="unified-atlas-svg" viewBox="${v}" preserveAspectRatio="xMidYMid meet" aria-label="${overview?'Cała mapa Śródziemia':'Mapa rozdziału '+chapter} ze wspólną trasą"><image href="./atlas-srodziemia.jpg" x="0" y="0" width="1490" height="1000" preserveAspectRatio="none"/><path d="${g.path}" stroke="#241e14" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${g.path}" stroke="#e1c68d" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-dasharray="3 13"/><path d="${g.path}" stroke="#e6b65c" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="${progress} ${total+2}"/><path d="${g.path}" stroke="#fff3c4" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="${progress} ${total+2}"/>${dots}${position?`<g pointer-events="none"><circle cx="${position.x}" cy="${position.y}" r="19" fill="#0b1816" stroke="#ffeab2" stroke-width="4"/><circle cx="${position.x}" cy="${position.y}" r="7" fill="#ffdb81"/></g>`:''}</svg>`;
+ const k=mapK(), overview=chapter===5;
+ if(overview){
+  const pts=WORLD_POINTS.map(([x,y])=>({x,y})),g=routeDistanceGeometry(k,pts,stops);
+  const pins=pts.map((p,i)=>{const seen=stops[i].km<=k,major=!!stops[i].kind;
+   return `<g data-stop="${i}" tabindex="0" role="button" aria-label="${esc(stops[i].name)}"><circle cx="${p.x}" cy="${p.y}" r="17" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${major?7:4}" fill="${seen?'#e7c17a':'#2d3f33'}" stroke="#f3dfac" stroke-width="1.7"/></g>`}).join('');
+  return `<svg class="unified-atlas-svg" viewBox="0 0 1490 1000" preserveAspectRatio="xMidYMid meet"><image href="./atlas-srodziemia.jpg" x="0" y="0" width="1490" height="1000"/><path d="${g.path}" stroke="#3d3526" stroke-width="5" fill="none"/><path d="${g.path}" stroke="#efe0b5" stroke-width="2" stroke-dasharray="1 8" fill="none"/><path d="${g.path}" stroke="#dcb46f" stroke-width="3.4" stroke-dasharray="${g.done} ${g.total+5}" fill="none"/>${pins}</svg>`;
+ }
+ const cfg=CHAPTER_ROUTES[chapter],inds=cfg.names,pts=cfg.points.map(([x,y])=>({x,y})),st=inds.map(i=>stops[i]);
+ const g=routeDistanceGeometry(k,pts,st);
+ const pins=pts.map((p,i)=>{const stop=st[i],seen=stop.km<=k,major=!!stop.kind,idx=inds[i];
+  const align=p.x>510?'end':'start',dx=align==='end'?-12:12;
+  const label='';
+  return `<g data-stop="${idx}" role="button" tabindex="0" aria-label="${esc(stop.name)}"><circle cx="${p.x}" cy="${p.y}" r="22" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${major?6:4.5}" fill="${seen?'#f2d49a':'#32483c'}" stroke="#fff0c6" stroke-width="1.6"/>${label}</g>`;
+ }).join('');
+ const pos=k>=st[0].km && k<=st.at(-1).km?g.current:null;
+ return `<svg class="unified-atlas-svg clean-chapter-svg" viewBox="0 0 750 318" preserveAspectRatio="xMidYMid meet" aria-label="Mapa rozdziału ${chapter}"><image href="${cfg.image}" x="0" y="0" width="750" height="318" preserveAspectRatio="none"/><path d="${g.path}" stroke="#3d3727" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".8"/><path d="${g.path}" stroke="#f2e0b5" stroke-width="1.8" stroke-dasharray="1 8" fill="none" stroke-linecap="round"/><path d="${g.path}" stroke="#dfb566" stroke-width="2.8" stroke-dasharray="${g.done} ${g.total+5}" stroke-linecap="round" fill="none"/>${pins}${pos?`<circle cx="${pos.x}" cy="${pos.y}" r="9" fill="#14251d" stroke="#f3ce8b" stroke-width="2.2"/><circle cx="${pos.x}" cy="${pos.y}" r="3" fill="#f9e7bf"/>`:''}</svg>`;
 }
 function mapSvg(){return sharedAtlasSvg(mapBrowse||chapterByDistance(Math.min(mapK(),TOTAL-.01)).id)}
 function positionAt(k){if(k<=0)return stops[0];for(let i=1;i<stops.length;i++){if(k<=stops[i].km){let a=stops[i-1],b=stops[i],t=(k-a.km)/(b.km-a.km);return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}}}return stops.at(-1)}
