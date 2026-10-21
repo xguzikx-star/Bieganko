@@ -185,3 +185,5 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 @keyframes stamp{0%{transform:scale(2.4) rotate(-25deg);opacity:0}60%{opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:1}}
 @keyframes revealPan{from{transform:scale(1.12)}to{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.reveal-art img,.reveal-seal .seal,.reveal-sealstage .seal{animation:none}.reveal-card{transition:none}}
+
+.stop-km{color:#c9ab73;font-size:11px;letter-spacing:1.4px;margin:14px 0 4px}

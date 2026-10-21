@@ -14,3 +14,9 @@ v1.9.2: wszystkie obrazki leżą w głównym folderze, tak samo jak w repozytori
 v1.9.3: brak automatycznego przybliżania na iPhonie przy wpisywaniu treningu (pola formularza 16 px), zabezpieczenie pola daty przed rozpychaniem formularza.
 
 v2.0: ekran odkrycia nowego miejsca z ilustracją i pieczęcią (oraz informacją o zakończeniu rozdziału), animacja przejścia znacznika po trasie po zapisaniu treningu, dziennik wyprawy w Kronice (wpis do każdego treningu zależny od miejsca na szlaku i rodzaju treningu), 18 pieczęci do zdobycia, przypomnienie o kopii zapasowej co 7 dni (z podpowiedzią o dodaniu do ekranu początkowego).
+
+v2.1: usunięte komentarze techniczne z kart miejsc, mapy, kroniki i ustawień.
+
+v2.2: nowe fotorealistyczne grafiki 17 lokacji (960×640).
+
+v2.3: grafiki Emyn Muil, Ithilien i Góry Przeznaczenia.
