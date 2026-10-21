@@ -1,5 +1,7 @@
-// v1.9: use network for application code to avoid stale mobile UI.
-const CACHE='srodziemie-v19';
-self.addEventListener('install',event=>{event.waitUntil(self.skipWaiting())});
-self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('srodziemie-')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET')return;const url=new URL(req.url);if(url.origin!==self.location.origin)return;event.respondWith(fetch(req,{cache:'no-store'}).catch(()=>caches.match(req)))});
+// v1.9.1: network-first for everything (fresh UI online), with a precached copy for offline use.
+const CACHE='srodziemie-v191';
+const CORE=['./','./index.html','./style.css?v=1.9.1','./app.js?v=1.9.1','./manifest.webmanifest','./assets/chapter-2-przez-gory-i-mroki.jpg','./assets/chapter-3-nurtem-wielkiej-rzeki.jpg','./assets/chapter-4-w-cieniu-mordoru.jpg','./assets/eriador-atlas.jpg','./assets/icon-180.png','./assets/icon-192.png','./assets/icon-512.png','./assets/icon.svg','./assets/stop-anduina.jpg','./assets/stop-argonath.jpg','./assets/stop-bree.jpg','./assets/stop-brod-bruinen.jpg','./assets/stop-caradhras.jpg','./assets/stop-cirith-ungol.jpg','./assets/stop-emyn-muil.jpg','./assets/stop-gora-przeznaczenia.jpg','./assets/stop-gorgoroth.jpg','./assets/stop-hobbiton.jpg','./assets/stop-hollin.jpg','./assets/stop-ithilien.jpg','./assets/stop-komarowe-bagna.jpg','./assets/stop-lothlorien.jpg','./assets/stop-martwe-bagna.jpg','./assets/stop-moria.jpg','./assets/stop-rauros.jpg','./assets/stop-rivendell.jpg','./assets/stop-stary-las.jpg','./assets/stop-wichrowy-czub.jpg'];
+self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).catch(()=>{}).then(()=>self.skipWaiting()))});
+self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('srodziemie-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
+self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET')return;const url=new URL(req.url);if(url.origin!==self.location.origin)return;
+ event.respondWith(fetch(req,{cache:'no-store'}).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put(req,copy))}return res}).catch(()=>caches.match(req).then(hit=>hit||(req.mode==='navigate'?caches.match('./index.html'):Response.error()))))});

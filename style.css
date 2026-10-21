@@ -117,3 +117,17 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none
 .map-stage:not(:has(.atlas-image)) .map-tools button{width:38px;height:38px;border-radius:50%}
 .map-frame-caption{flex-wrap:wrap;gap:5px 12px}
 @media(max-width:430px){.map-stage:not(:has(.atlas-image)){aspect-ratio:640/940;max-height: min(64dvh,570px)}.journey-intro p{font-size:12px;line-height:1.5}}
+
+/* v1.9.1: fixes — app column width on desktop/iPad, chapter II–IV frame matches the 1086×1448 art exactly, atlas tools sit over the buttons painted into the Eriador image. */
+.app{max-width:620px}
+.map-frame{margin:0 auto;width:calc(100% - 18px)}
+.map-stage:not(:has(.atlas-image)){width:100%;aspect-ratio:1086/1448;max-height:none}
+@media(max-width:430px){.map-stage:not(:has(.atlas-image)){aspect-ratio:1086/1448;max-height:none}}
+.map-stage:not(:has(.atlas-image)) .map-landscape{object-fit:cover;object-position:center}
+.map-art .chapter-label{font:30px Marcellus,Georgia,serif;fill:#e9d3a2;stroke:#08110d;stroke-width:9px;paint-order:stroke;stroke-linejoin:round;filter:none}
+.map-art .chapter-label.discovered{fill:#fff0c8}
+.map-stage .map-tools.atlas-tools{left:90.1%;right:auto;top:31.3%;width:7.4%;height:36%;gap:0;padding:4% 0;display:flex;flex-direction:column;justify-content:space-between;align-items:center;background:#0c100d;border-radius:999px;box-shadow:0 0 0 2px #0c100d}
+.map-stage .map-tools.atlas-tools button{width:92%!important;height:auto!important;aspect-ratio:1;font-size:clamp(13px,2.4vw,22px);line-height:1;padding:0;display:grid;place-items:center;border:1.5px solid #c9a96b;background:#080b09;border-radius:50%}
+@media(min-width:640px){.map-stage .map-tools.atlas-tools button{font-size:22px}}
+.map-stage:not(:has(.atlas-image)) .map-tools{right:auto;left:12px;top:50%;transform:translateY(-50%)}
+.atlas-overlay g[filter],.atlas-overlay circle:not(.atlas-hotspot){pointer-events:none}
