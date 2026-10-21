@@ -1,5 +1,5 @@
-# Śródziemie v1.5 — poprawka atlasu
+# Śródziemie v1.7
 
-Główny atlas Eriadoru został osadzony bezpośrednio w `app.js`, aby jego wyświetlanie nie zależało od osobnego żądania pobrania `assets/eriador-atlas.jpg`.
+Kontrola plików i poprawki: niezależna ilustracja dla późniejszych rozdziałów osadzona w aplikacji; nieodkryte miejsca nie ujawniają ilustracji; nowa wersja plików JS/CSS; naprawiony numer wersji w ustawieniach. Dane lokalne przechowywane pod tym samym kluczem.
 
-Podmień **wszystkie pliki** na GitHub Pages, zachowując pliki w głównym katalogu. Dane treningowe pozostają lokalnie w przeglądarce (`localStorage` — klucz `srodziemie.v1`). Warto wykonać kopię JSON przed aktualizacją.
+Uwaga: zaawansowane testy w Safari na fizycznym iPhonie nadal nie zostały wykonane, a atlas dalszych etapów jest tymczasowym obrazem koncepcyjnym.

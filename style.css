@@ -102,3 +102,5 @@ h1,h2,h3,.top h1,.section-title,.mini-title,.hero-title,.sheet h2,.metrics stron
 @media(max-width:385px){.discover-rich{grid-template-columns:96px 1fr}.discover-rich img{width:96px;min-height:110px}}
 
 .app-error{margin:24px 16px;padding:22px 17px;background:#1e3029;border:1px solid #a68a58;border-radius:14px;line-height:1.6}.app-error h2{font-family:Marcellus,Georgia,serif;color:#ebd5a9}.app-error pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#e9ba9a;font-size:12px}.app-error button{margin-top:16px}
+
+.illustration.locked-art{height:178px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#29443a,#101e1b 75%);border:1px solid #8f7a5559}.mystery-symbol{font:76px Marcellus,Georgia,serif;color:#ba9b65;opacity:.75}
