@@ -19,3 +19,9 @@ Komplet plików do głównego katalogu repozytorium GitHub Pages. Rozpakuj bez t
 
 ## v3.1 — poprawa OCR
 Dystans i czas są rozpoznawane z osobnych obszarów zrzutu Mi Fitness. Jeśli rozpoznawanie się nie powiedzie, importer nie wstawia niepewnej wartości.
+
+
+## v3.2 — naprawa importu Mi Fitness
+- Obszary OCR wyznaczane na podstawie szerokości zrzutu, niezależnie od jego całkowitej długości.
+- Oddzielny wycinek dystansu (lewy górny kafel) i czasu treningu.
+- Zachowano ręczne zatwierdzanie wartości przed zapisaniem.

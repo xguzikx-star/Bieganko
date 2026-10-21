@@ -461,10 +461,16 @@ function miExtract(texts){
  const distanceCandidates=[distanceText,t];
  let dist=null;
  for(const text of distanceCandidates){
-  const normalized=text.replace(/\s*([,.])\s*/g,'$1');
-  let m=normalized.match(/(\d{1,3}[,.]\d{1,2})\s*(?:k\s*m|kn|km)\b/i);
-  if(!m)m=normalized.match(/(?:^|\n|\s)(\d{1,3}[,.]\d{1,2})(?=\s|$)/m);
-  if(m){const n=miNumber(m[1]);if(n>=.05&&n<=150){dist=n;break}}
+  const normalized=text.replace(/\s*([,.])\s*/g,'$1').replace(/[oO]/g,'0');
+  const matches=[...normalized.matchAll(/(?:^|\D)(\d{1,3}[,.]\d{1,2})(?:\s*(?:k\s*m|kn|km))?(?=\D|$)/gm)];
+  for(const m of matches){const n=miNumber(m[1]);if(n>=0.05&&n<=150){dist=n;break}}
+  if(dist!==null)break;
+  // OCR may read the comma as a space or drop it entirely. Only the narrow
+  // distance crop is eligible for this fallback, never the whole screenshot.
+  if(text===distanceText){
+   const match=normalized.match(/(?:^|\s)(\d{1,2})[\s]+(\d{2})\s*(?:km)?(?:\s|$)/i);
+   if(match){const n=Number(match[1]+'.'+match[2]);if(n>=.05&&n<=150){dist=n;break}}
+  }
  }
  const date=(dateText+'\n'+t).match(/(20\d{2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{1,2})/);
  let minutes=null;
@@ -487,27 +493,54 @@ function miExtract(texts){
  if(result.minutes!==null&&(result.minutes<1||result.minutes>1440))result.minutes=null;
  return result;
 }
-function miPrepareCrop(img,from,to,mode='text'){
+function miPrepareCrop(img,from,to,mode='text',left=0,right=1){
+ // Crop coordinates are in multiples of IMAGE WIDTH, not total image height.
+ // Mi Fitness produces long and short scrolling screenshots with identical
+ // header dimensions. This preserves the same field locations in both.
+ const cropTop=Math.max(0,Math.floor(from*img.naturalWidth));
+ const cropBottom=Math.min(img.naturalHeight,Math.ceil(to*img.naturalWidth));
+ const cropLeft=Math.max(0,Math.floor(left*img.naturalWidth));
+ const cropRight=Math.min(img.naturalWidth,Math.ceil(right*img.naturalWidth));
  const canvas=document.createElement('canvas');
- const scale=Math.min(2,2000/img.naturalWidth);
- canvas.width=Math.round(img.naturalWidth*scale);
- canvas.height=Math.max(1,Math.round(img.naturalHeight*(to-from)*scale));
+ const scale=Math.max(1,Math.min(3,2400/Math.max(1,cropRight-cropLeft)));
+ canvas.width=Math.max(1,Math.round((cropRight-cropLeft)*scale));
+ canvas.height=Math.max(1,Math.round((cropBottom-cropTop)*scale));
  const ctx=canvas.getContext('2d',{willReadFrequently:true});
  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
- ctx.drawImage(img,0,img.naturalHeight*from,img.naturalWidth,img.naturalHeight*(to-from),0,0,canvas.width,canvas.height);
+ ctx.drawImage(img,cropLeft,cropTop,cropRight-cropLeft,cropBottom-cropTop,0,0,canvas.width,canvas.height);
  const pixels=ctx.getImageData(0,0,canvas.width,canvas.height);
  for(let i=0;i<pixels.data.length;i+=4){
   const r=pixels.data[i],g=pixels.data[i+1],b=pixels.data[i+2];
-  const v=Math.max(r,g,b)>110?0:255;
+  // White glyphs on the dark Mi Fitness background -> black on white.
+  const v=Math.max(r,g,b)>100?0:255;
   pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=v;
  }
  ctx.putImageData(pixels,0,0);return canvas;
 }
 function miLoadOCR(){if(window.Tesseract)return Promise.resolve(window.Tesseract);return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';script.onload=()=>window.Tesseract?resolve(window.Tesseract):reject(Error('Silnik OCR niedostępny'));script.onerror=()=>reject(Error('Nie udało się pobrać OCR. Włącz internet i spróbuj ponownie.'));document.head.append(script)})}
 async function miRecognize(file,onProgress){const url=URL.createObjectURL(file);let worker;try{const img=new Image();await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});if(img.naturalHeight<img.naturalWidth*1.5)throw Error('Wybierz pionowy zrzut podsumowania treningu Mi Fitness.');const T=await miLoadOCR();worker=await T.createWorker('eng',1,{logger:m=>{if(m.status==='recognizing text')onProgress?.(Math.round(m.progress*100))}});
- // Fractions of the full Mi Fitness long screenshot, not the visible phone viewport.
- const crops={date:[.060,.095],distance:[.098,.138],duration:[.132,.169],top:[.067,.216],heart:[.20,.44],cadence:[.63,.81],effect:[.78,.95]};
- const texts={};for(const [key,range]of Object.entries(crops)){onProgress?.(key);const r=await worker.recognize(miPrepareCrop(img,...range));texts[key]=r.data.text}
+ // Layout positions relative to screenshot WIDTH; resilient to cropped
+ // screenshots with/without the lower charts and to long screenshots.
+ const crops={
+  date:[.54,.69,0,.85],
+  distance:[.78,1.02,.04,.58],
+  duration:[1.04,1.22,.04,.38],
+  top:[.50,1.42,0,1],
+  heart:[1.60,2.95,0,1]
+ };
+ // Lower panels may not be present in a shorter capture. Scan a wider
+ // region only if the image actually contains that region.
+ if(img.naturalHeight/img.naturalWidth>4.4){
+  crops.cadence=[4.0,6.2,0,1];
+  crops.effect=[5.2,7.5,0,1];
+ }
+ const texts={};
+ for(const [key,[y1,y2,x1,x2]]of Object.entries(crops)){
+  onProgress?.(key);
+  const canvas=miPrepareCrop(img,y1,y2,'text',x1,x2);
+  const result=await worker.recognize(canvas);
+  texts[key]=result.data.text;
+ }
  return{values:miExtract(texts),raw:texts}}finally{if(worker)await worker.terminate();URL.revokeObjectURL(url)}}
 function miImporter(){sheet(`<h2>Import z Mi Fitness</h2><p class="note">Wybierz pionowy zrzut ekranu z podsumowaniem treningu. Pierwszy odczyt wymaga internetu do pobrania silnika OCR. Obraz jest analizowany na Twoim urządzeniu, bez wysyłania go na serwer aplikacji.</p><div class="field"><label for="miFile">Zrzut ekranu</label><input id="miFile" type="file" accept="image/png,image/jpeg,image/webp,image/*"></div><p class="note" id="miStatus" aria-live="polite">Odczytane wartości zawsze sprawdź przed zapisaniem — szczególnie datę, dystans i czas.</p><button class="secondary" id="miCancel" style="width:100%">Wróć</button>`);$('#miCancel').onclick=()=>{closeSheet();workoutSheet()};$('#miFile').onchange=async ev=>{const file=ev.target.files?.[0];if(!file)return;const status=$('#miStatus');$('#miFile').disabled=true;status.textContent='Przygotowywanie obrazu…';try{const result=await miRecognize(file,step=>{status.textContent=typeof step==='number'?`Rozpoznawanie tekstu: ${step}%`:`Odczyt sekcji: ${step}…`});if(result.values.km==null||result.values.minutes==null){status.textContent='Nie udało się pewnie rozpoznać '+[result.values.km==null?'dystansu':'',result.values.minutes==null?'czasu treningu':''].filter(Boolean).join(' i ')+'. Wybierz wyraźny pełny zrzut albo wpisz dane ręcznie. Nic nie zapisano.';return}miImport={...result.values};closeSheet();workoutSheet();toast('Odczytano dystans i czas. Sprawdź pozostałe wartości przed zapisaniem.')}catch(err){status.textContent='Nie udało się odczytać: '+err.message+' Możesz zapisać trening ręcznie.'}finally{const input=$('#miFile');if(input)input.disabled=false}}}
 function workoutSheet(id=null){let old=data.workouts.find(w=>w.id===id)||(miImport||{}),detail=!!old.segments?.length,segments=(old.segments||[{kind:'Rozgrzewka',minutes:5,speed:5},{kind:'Bieg',minutes:2,speed:8},{kind:'Marsz',minutes:3,speed:5.5}]);function content(){sheet(`<h2>${id?'Edytuj trening':'Nowa aktywność'}</h2><form id="workoutForm"><div class="field"><label>Data</label><input required name="date" type="date" value="${esc(old.date||new Date().toLocaleDateString('sv-SE'))}" max="${new Date().toLocaleDateString('sv-SE')}"></div><div class="field"><label>Rodzaj aktywności</label><select name="type"><option ${old.type==='Marsz'?'selected':''}>Marsz</option><option ${old.type==='Bieg'?'selected':''}>Bieg</option><option ${old.type==='Interwały'?'selected':''}>Interwały</option></select></div><div class="segmented"><button type="button" data-place="treadmill" class="${old.place!=='outdoors'?'selected':''}">Bieżnia</button><button type="button" data-place="outdoors" class="${old.place==='outdoors'?'selected':''}">Teren</button></div><div class="two"><div class="field"><label>Dystans (km)</label><input name="km" required type="number" inputmode="decimal" min="0.01" step="0.01" value="${esc(old.km??'')}"></div><div class="field"><label>Czas (min, opcjonalnie)</label><input name="minutes" type="number" inputmode="decimal" min="0" step="0.1" value="${esc(old.minutes??'')}"></div></div><div class="segmented"><button type="button" data-detail="off" class="${!detail?'selected':''}">Szybki zapis</button><button type="button" data-detail="on" class="${detail?'selected':''}">Dokładne interwały</button></div><div id="details" ${detail?'':'hidden'}><div class="field"><label>Segmenty: rodzaj / czas min / km/h</label><div id="segments" style="display:grid;gap:7px">${segmentsHtml(segments)}</div><button type="button" class="secondary" id="addSegment">+ Dodaj odcinek</button></div><p class="note">Segmenty pomagają analizować trening. Podstawą drogi jest wpisany dystans z bieżni, bez automatycznego wyliczania.</p></div><div class="two"><div class="field"><label>Najdłuższy ciągły bieg (min)</label><input name="longestRun" type="number" min="0" step="0.1" value="${esc(old.longestRun??'')}"></div><div class="field"><label>Wysiłek (1–10)</label><input name="rpe" type="number" min="1" max="10" step="1" value="${esc(old.rpe??'')}"></div></div><div class="two"><div class="field"><label>Łączny czas biegu (min)</label><input name="runMinutes" type="number" min="0" step="0.1" value="${esc(old.runMinutes??'')}"></div><div class="field"><label>Nachylenie bieżni (%)</label><input name="incline" type="number" min="0" step="0.5" value="${esc(old.incline??'')}"></div></div><h3 class="mini-title">Dane z zegarka (opcjonalne)</h3><div class="two"><div class="field"><label>Średnie tętno (bpm)</label><input name="hrAvg" type="number" min="35" max="230" value="${esc(old.hrAvg??'')}"></div><div class="field"><label>Maksymalne tętno (bpm)</label><input name="hrMax" type="number" min="35" max="230" value="${esc(old.hrMax??'')}"></div><div class="field"><label>Średnia kadencja (krok/min)</label><input name="cadenceAvg" type="number" min="0" max="250" value="${esc(old.cadenceAvg??'')}"></div><div class="field"><label>Maks. kadencja</label><input name="cadenceMax" type="number" min="0" max="250" value="${esc(old.cadenceMax??'')}"></div><div class="field"><label>Liczba kroków</label><input name="steps" type="number" min="0" value="${esc(old.steps??'')}"></div><div class="field"><label>Aktywne kcal</label><input name="activeKcal" type="number" min="0" value="${esc(old.activeKcal??'')}"></div><div class="field"><label>Całkowite kcal</label><input name="totalKcal" type="number" min="0" value="${esc(old.totalKcal??'')}"></div><div class="field"><label>Efekt treningu (0–5)</label><input name="trainingEffect" type="number" min="0" max="5" step="0.1" value="${esc(old.trainingEffect??'')}"></div><div class="field"><label>Obciążenie treningowe</label><input name="trainingLoad" type="number" min="0" value="${esc(old.trainingLoad??'')}"></div><div class="field"><label>Regeneracja (godz.)</label><input name="recoveryHours" type="number" min="0" value="${esc(old.recoveryHours??'')}"></div></div><h3 class="mini-title">Strefy tętna (minuty, opcjonalnie)</h3><div class="two">${[['zoneRecovery','Regeneracyjna'],['zoneIntensive','Intensywna'],['zoneAerobic','Aerobowa'],['zoneAnaerobic','Anaerobowa'],['zoneMax','VO₂ max']].map(([k,label])=>`<div class="field"><label>${label}</label><input name="${k}" type="number" min="0" step="0.01" value="${esc(old[k]??'')}"></div>`).join('')}</div><div class="field"><label>Notatka</label><textarea name="notes" rows="2">${esc(old.notes??'')}</textarea></div><label class="tiny"><input type="checkbox" name="test" ${old.test?'checked':''}> To próba porównawcza</label><div class="sheet-actions"><button type="submit" class="primary">Zapisz trening</button>${id?'<button type="button" class="secondary danger" id="deleteWorkout">Usuń</button>':''}</div></form>`);let place=old.place||'treadmill';$('#sheet').querySelectorAll('[data-place]').forEach(btn=>btn.onclick=()=>{place=btn.dataset.place;$('#sheet').querySelectorAll('[data-place]').forEach(x=>x.classList.toggle('selected',x===btn))});$('#sheet').querySelectorAll('[data-detail]').forEach(btn=>btn.onclick=()=>{detail=btn.dataset.detail==='on';$('#details').hidden=!detail;$('#sheet').querySelectorAll('[data-detail]').forEach(x=>x.classList.toggle('selected',x===btn))});function collectSegments(){return [...$('#segments').querySelectorAll('.segment')].map(el=>({kind:el.querySelector('[data-seg="kind"]').value,minutes:+el.querySelector('[data-seg="minutes"]').value,speed:+el.querySelector('[data-seg="speed"]').value})).filter(x=>x.minutes>0)}$('#addSegment').onclick=()=>{segments=collectSegments();segments.push({kind:'Marsz',minutes:3,speed:5});$('#segments').innerHTML=segmentsHtml(segments);bindRemove()};function bindRemove(){$('#segments').querySelectorAll('[data-remove-seg]').forEach(b=>b.onclick=()=>{segments=collectSegments();segments.splice(+b.dataset.removeSeg,1);$('#segments').innerHTML=segmentsHtml(segments);bindRemove()})}bindRemove();$('#workoutForm').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),w={id:id||crypto.randomUUID(),date:String(fd.get('date')),type:String(fd.get('type')),place,km:+fd.get('km'),minutes:fd.get('minutes')===''?null:+fd.get('minutes'),longestRun:fd.get('longestRun')===''?null:+fd.get('longestRun'),rpe:fd.get('rpe')===''?null:+fd.get('rpe'),runMinutes:fd.get('runMinutes')===''?null:+fd.get('runMinutes'),incline:fd.get('incline')===''?null:+fd.get('incline'),notes:String(fd.get('notes')),test:fd.has('test'),source:old.source||'Ręcznie',...Object.fromEntries(['hrAvg','hrMax','cadenceAvg','cadenceMax','steps','activeKcal','totalKcal','trainingEffect','trainingLoad','recoveryHours','zoneRecovery','zoneIntensive','zoneAerobic','zoneAnaerobic','zoneMax'].map(k=>[k,fd.get(k)===''?null:+fd.get(k)])),segments:detail?collectSegments():[]};if(!Number.isFinite(w.km)||w.km<=0||w.date>new Date().toLocaleDateString('sv-SE'))return toast('Sprawdź dystans i datę');if(w.hrAvg&&w.hrMax&&w.hrMax<w.hrAvg)return toast('Tętno maksymalne nie może być niższe niż średnie.');const before=travel();miImport=null;if(id)data.workouts=data.workouts.map(t=>t.id===id?w:t);else data.workouts.push(w);localStorage.setItem(KEY,JSON.stringify(data));closeSheet();const delta=travel()-before;toast(delta>0?`Zapisano trening. Szlak: +${fmt(delta)} km.`:delta<0?`Zapisano zmianę. Szlak: ${fmt(delta)} km.`:'Zapisano trening bez zmiany postępu szlaku.');celebrate(before)};if(id)$('#deleteWorkout').onclick=()=>{if(confirm('Usunąć ten trening? Pozycja na mapie zostanie przeliczona.')){data.workouts=data.workouts.filter(w=>w.id!==id);save();closeSheet();toast('Trening usunięty')}}}content()}
