@@ -287,21 +287,32 @@ const J_ACT={
 };
 function journalEntries(){
  const ws=data.workouts.map((w,i)=>({w,i})).sort((a,b)=>a.w.date.localeCompare(b.w.date)||a.i-b.i);
- let cum=0;const out=[];
+ let cum=0,bestKm=0,bestLongestRun=0;const out=[];
  for(const {w} of ws){
-  const before=Math.min(TOTAL,cum*SCALE);cum+=Number(w.km||0);const after=Math.min(TOTAL,cum*SCALE);
+  const km=Number(w.km||0),longestRun=Number(w.longestRun||0);
+  const before=Math.min(TOTAL,cum*SCALE);cum+=km;const after=Math.min(TOTAL,cum*SCALE);
   const ch=chapterByDistance(Math.min(after,TOTAL-0.01)).id;
   const reached=stops.filter(s=>s.km>before&&s.km<=after);
   const here=[...stops].reverse().find(s=>s.km<=after)||stops[0];
   const ahead=stops.find(s=>s.km>after);
-  const act=pickBy(J_ACT[w.type]||J_ACT['Marsz'],w.id,1).replace('{km}',fmt(w.km)).replace('{t}',fmt(w.km*SCALE));
+  const act=pickBy(J_ACT[w.type]||J_ACT['Marsz'],w.id,1).replace('{km}',fmt(km)).replace('{t}',fmt(km*SCALE));
   let text=pickBy(J_OPEN[ch],w.id,0)+' '+act;
-  if(+w.km>=10)text+=' To był jeden z najdłuższych dni w drodze.';
-  else if(w.longestRun>=20)text+=' Długi, nieprzerwany bieg — nogi pamiętały go jeszcze wieczorem.';
+  const newDistanceRecord=km>=5 && km>bestKm+0.009;
+  const tiedBestDistance=km>=10 && !newDistanceRecord && bestKm>=10 && Math.abs(km-bestKm)<0.009;
+  const newRunRecord=longestRun>=15 && longestRun>bestLongestRun+0.009;
+  if(newDistanceRecord){
+   text+=bestKm>0?` To był Twój najdłuższy trening do tej pory — ${fmt(km)} km.`:' To był mocny, długi odcinek drogi.';
+  }else if(tiedBestDistance){
+   text+=' Ten trening dorównał Twojemu najdłuższemu dotąd dystansowi.';
+  }else if(newRunRecord){
+   text+=bestLongestRun>0?` To był Twój najdłuższy ciągły bieg: ${fmt(longestRun)} min bez przerwy.`:' Długi, nieprzerwany bieg zostawił ślad w nogach jeszcze długo po zmroku.';
+  }
   if(reached.length)text+=` Tego dnia szlak doprowadził do: ${reached.map(s=>s.name).join(', ')}.`;
   else if(ahead)text+=' '+pickBy(['Przed Tobą','Na horyzoncie','Gdzieś przed Tobą czeka'],w.id,2)+' '+ahead.name+'.';
   else text+=' Droga dobiegła końca.';
   out.push({w,text,place:reached.at(-1)?.name||here.name,reached:reached.map(s=>s.name),ch});
+  bestKm=Math.max(bestKm,km);
+  bestLongestRun=Math.max(bestLongestRun,longestRun);
  }
  return out;
 }
@@ -309,22 +320,22 @@ function journalEntries(){
 /* ---- Pieczęcie ---- */
 function maxWeekStreak(){const keys=[...new Set(data.workouts.map(w=>weekKey(w.date)))];if(!keys.length)return 0;const mondays=[...new Set(data.workouts.map(w=>{const d=new Date(w.date+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)}))].sort();let best=1,run=1;for(let i=1;i<mondays.length;i++){const gap=Math.round((new Date(mondays[i])-new Date(mondays[i-1]))/864e5);run=gap===7?run+1:1;best=Math.max(best,run)}return best}
 const SEALS=[
- {id:'krok',sym:'✦',name:'Pierwszy krok',desc:'Zapisany pierwszy trening. Każda wielka droga zaczyna się od progu domu.',test:()=>data.workouts.length>=1},
+ {id:'krok',sym:'◇',name:'Pierwszy ślad',desc:'Zapisany pierwszy trening. Każda wielka droga zaczyna się od pierwszego kroku.',test:()=>data.workouts.length>=1},
  {id:'bieg',sym:'➶',name:'Pierwszy bieg',desc:'Pierwszy trening typu bieg.',test:()=>data.workouts.some(w=>w.type==='Bieg')},
- {id:'piatka',sym:'Ⅴ',name:'Pięć mil',desc:'Co najmniej 5 km w jednym treningu.',test:()=>data.workouts.some(w=>+w.km>=5)},
- {id:'dziesiatka',sym:'Ⅹ',name:'Długi dzień',desc:'Co najmniej 10 km w jednym treningu.',test:()=>data.workouts.some(w=>+w.km>=10)},
- {id:'wytrwalosc',sym:'❂',name:'Oddech strażnika',desc:'Nieprzerwany bieg trwający co najmniej 20 minut.',test:()=>data.workouts.some(w=>+w.longestRun>=20)},
- {id:'zrywy',sym:'⚡',name:'Pięć zrywów',desc:'Pięć treningów interwałowych.',test:()=>data.workouts.filter(w=>w.type==='Interwały').length>=5},
- {id:'proba',sym:'⚖',name:'Próba sił',desc:'Pierwszy trening oznaczony jako próba porównawcza.',test:()=>data.workouts.some(w=>w.test)},
- {id:'dziesiec',sym:'☰',name:'Dziesięć wpisów',desc:'Dziesięć zapisanych treningów.',test:()=>data.workouts.length>=10},
- {id:'piecdziesiat',sym:'❖',name:'Pół setki wpisów',desc:'Pięćdziesiąt zapisanych treningów.',test:()=>data.workouts.length>=50},
+ {id:'piatka',sym:'5',name:'Piątka',desc:'Co najmniej 5 km w jednym treningu.',test:()=>data.workouts.some(w=>+w.km>=5)},
+ {id:'dziesiatka',sym:'10',name:'Długi odcinek',desc:'Co najmniej 10 km w jednym treningu.',test:()=>data.workouts.some(w=>+w.km>=10)},
+ {id:'wytrwalosc',sym:'◎',name:'Równy oddech',desc:'Nieprzerwany bieg trwający co najmniej 20 minut.',test:()=>data.workouts.some(w=>+w.longestRun>=20)},
+ {id:'zrywy',sym:'≈',name:'Pięć zrywów',desc:'Pięć treningów interwałowych.',test:()=>data.workouts.filter(w=>w.type==='Interwały').length>=5},
+ {id:'proba',sym:'⌖',name:'Próba porównawcza',desc:'Pierwszy trening oznaczony jako próba porównawcza.',test:()=>data.workouts.some(w=>w.test)},
+ {id:'dziesiec',sym:'☷',name:'Dziesięć zapisów',desc:'Dziesięć zapisanych treningów.',test:()=>data.workouts.length>=10},
+ {id:'piecdziesiat',sym:'❖',name:'Pół setki',desc:'Pięćdziesiąt zapisanych treningów.',test:()=>data.workouts.length>=50},
  {id:'seria4',sym:'◈',name:'Cztery tygodnie',desc:'Treningi w czterech kolejnych tygodniach.',test:()=>maxWeekStreak()>=4},
  {id:'seria12',sym:'✺',name:'Pora roku w drodze',desc:'Treningi w dwunastu kolejnych tygodniach.',test:()=>maxWeekStreak()>=12},
- {id:'km50',sym:'L',name:'Pięćdziesiąt kilometrów',desc:'50 km Twojej drogi łącznie.',test:()=>real()>=50},
- {id:'km100',sym:'C',name:'Setka',desc:'100 km Twojej drogi łącznie.',test:()=>real()>=100},
- {id:'km500',sym:'D',name:'Pięćset',desc:'500 km Twojej drogi łącznie.',test:()=>real()>=500},
- {id:'rivendell',sym:'❦',name:'Dom Elronda',desc:'Ukończony rozdział I — dotarcie do Rivendell.',test:()=>travel()>=737},
- {id:'lorien',sym:'❧',name:'Złoty las',desc:'Ukończony rozdział II — dotarcie do Lothlórien.',test:()=>travel()>=1481},
+ {id:'km50',sym:'50',name:'Pięćdziesiąt kilometrów',desc:'50 km Twojej drogi łącznie.',test:()=>real()>=50},
+ {id:'km100',sym:'100',name:'Setka',desc:'100 km Twojej drogi łącznie.',test:()=>real()>=100},
+ {id:'km500',sym:'500',name:'Pięćset',desc:'500 km Twojej drogi łącznie.',test:()=>real()>=500},
+ {id:'rivendell',sym:'✧',name:'Dom Elronda',desc:'Ukończony rozdział I — dotarcie do Rivendell.',test:()=>travel()>=737},
+ {id:'lorien',sym:'❋',name:'Złoty las',desc:'Ukończony rozdział II — dotarcie do Lothlórien.',test:()=>travel()>=1481},
  {id:'rauros',sym:'≋',name:'Wodospady Rauros',desc:'Ukończony rozdział III.',test:()=>travel()>=2107},
  {id:'orodruina',sym:'◉',name:'Kres drogi',desc:'Dotarcie do Góry Przeznaczenia.',test:()=>travel()>=TOTAL}
 ];
@@ -347,7 +358,7 @@ function showReveal(){
   el.innerHTML=`<div class="reveal-card"><div class="reveal-art"><img src="${stopArt(s)}" alt="${esc(s.name)}"><div class="reveal-seal">${sealHtml({sym:'✧'},true,true)}</div></div><div class="reveal-body"><small class="eyebrow">${s.kind==='major'?'KAMIEŃ MILOWY':'NOWE MIEJSCE ODKRYTE'} · ${fmt(s.km)} KM SZLAKU</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p>${ch?`<div class="reveal-chapter"><b>Rozdział ${ch.roman} zakończony.</b>${nextCh?` Otwiera się rozdział ${nextCh.roman}: <i>${esc(nextCh.title)}</i>.`:' Wyprawa dobiegła końca.'}</div>`:''}<button class="primary" id="revealNext">${more}</button></div></div>`;
  }else{
   const s=item.seal;
-  el.innerHTML=`<div class="reveal-card reveal-seal-card"><div class="reveal-sealstage">${sealHtml(s,true,true)}</div><div class="reveal-body"><small class="eyebrow">NOWA PIECZĘĆ W KRONICE</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p><button class="primary" id="revealNext">${more}</button></div></div>`;
+  el.innerHTML=`<div class="reveal-card reveal-seal-card"><div class="reveal-sealstage">${sealHtml(s,true,true)}</div><div class="reveal-body"><small class="eyebrow">NOWA ODZNAKA W KRONICE</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p><button class="primary" id="revealNext">${more}</button></div></div>`;
  }
  document.body.append(el);requestAnimationFrame(()=>el.classList.add('in'));
  el.querySelector('#revealNext').onclick=()=>{el.classList.remove('in');setTimeout(()=>{el.remove();if(revealQueue.length)showReveal()},220)};
@@ -405,7 +416,7 @@ function bindBanner(){
 /* ---- Sekcje Kroniki ---- */
 function sealsPanel(){
  const earned=SEALS.filter(s=>data.seals?.[s.id]);
- return `<div class="panel"><div class="between"><h3 class="mini-title" style="margin:0">Pieczęcie</h3><span class="pill">${earned.length} / ${SEALS.length}</span></div><div class="seal-grid">${SEALS.map(s=>{const e=!!data.seals?.[s.id];return `<button class="seal-item" data-seal="${s.id}">${sealHtml(s,e)}<small>${esc(s.name)}</small></button>`}).join('')}</div></div>`;
+ return `<div class="panel"><div class="between"><h3 class="mini-title" style="margin:0">Odznaki Wędrowca</h3><span class="pill">${earned.length} / ${SEALS.length}</span></div><div class="seal-grid">${SEALS.map(s=>{const e=!!data.seals?.[s.id];return `<button class="seal-item" data-seal="${s.id}">${sealHtml(s,e)}<small>${esc(s.name)}</small></button>`}).join('')}</div></div>`;
 }
 function journalPanel(){
  const all=journalEntries().reverse();if(!all.length)return '';
@@ -414,7 +425,7 @@ function journalPanel(){
 }
 function sealSheet(id){
  const s=SEALS.find(x=>x.id===id),e=data.seals?.[id];if(!s)return;
- sheet(`<div class="seal-sheet">${sealHtml(s,!!e,true)}<small class="eyebrow">${e?'PIECZĘĆ ZDOBYTA · '+new Date(e).toLocaleDateString('pl-PL'):'PIECZĘĆ DO ZDOBYCIA'}</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p></div>`);
+ sheet(`<div class="seal-sheet">${sealHtml(s,!!e,true)}<small class="eyebrow">${e?'ODZNAKA ZDOBYTA · '+new Date(e).toLocaleDateString('pl-PL'):'ODZNAKA DO ZDOBYCIA'}</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p></div>`);
 }
 
 function render(){let labels={map:'Droga Pierścienia',training:'Dziennik treningów',chronicle:'Kronika podróży',growth:'Twoja kondycja'};$('#pageTitle').textContent=labels[view];$('#eyebrow').textContent=view==='map'?'WYPRAWA I • DROGA FRODA':'ŚRÓDZIEMIE • WYPRAWA I';$('#screen').innerHTML={map:renderMap,training:renderTraining,chronicle:renderChronicle,growth:renderGrowth}[view]();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#newWorkout')?.addEventListener('click',()=>workoutSheet());$('#miImportButton')?.addEventListener('click',miImporter);if(view==='map')attachMap();bindBanner();bindGrowth();$('#journalToggle')?.addEventListener('click',()=>{journalAll=!journalAll;render()})}

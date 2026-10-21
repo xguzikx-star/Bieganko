@@ -25,3 +25,6 @@ Dystans i czas są rozpoznawane z osobnych obszarów zrzutu Mi Fitness. Jeśli r
 - Obszary OCR wyznaczane na podstawie szerokości zrzutu, niezależnie od jego całkowitej długości.
 - Oddzielny wycinek dystansu (lewy górny kafel) i czasu treningu.
 - Zachowano ręczne zatwierdzanie wartości przed zapisaniem.
+
+
+Aktualizacja v3.3: odświeżona kolorystyka kroniki, nowe odznaki w miejsce pieczęci oraz poprawiona logika opisów w dzienniku wyprawy.
