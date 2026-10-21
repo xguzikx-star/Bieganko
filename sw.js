@@ -1,5 +1,5 @@
-const CACHE='srodziemie-v390';
-const CORE=['./','./index.html','./style.css?v=3.9','./app.js?v=3.9','./manifest.webmanifest','./eriador-atlas.jpg','./atlas-srodziemia.jpg','./icon-180.png','./icon-192.png','./icon-512.png','./icon.svg',...Array.from({length:12},(_,i)=>'./badge-art-'+String(i+1).padStart(2,'0')+'.png')];
+const CACHE='srodziemie-v400';
+const CORE=['./','./index.html','./style.css?v=4.0','./app.js?v=4.0','./manifest.webmanifest','./eriador-atlas.jpg','./atlas-srodziemia.jpg','./icon-180.png','./icon-192.png','./icon-512.png','./icon.svg',...Array.from({length:12},(_,i)=>'./badge-art-'+String(i+1).padStart(2,'0')+'.png')];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(v=>v.startsWith('srodziemie-')&&v!==CACHE).map(v=>caches.delete(v)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET'||new URL(r.url).origin!==self.location.origin)return;const navigation=r.mode==='navigate';e.respondWith(navigation?fetch(r).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put('./index.html',copy))}return res}).catch(()=>caches.match('./index.html')):caches.match(r).then(hit=>hit||fetch(r).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put(r,copy))}return res}))) });
