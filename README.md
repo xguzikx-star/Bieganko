@@ -15,3 +15,7 @@ Komplet plików do głównego katalogu repozytorium GitHub Pages. Rozpakuj bez t
 - Nie dodano żadnych zastępczych zdjęć. Brakujące zdjęcia lokacji i mapy mogą nadal nie wyświetlać się bez dołożenia ich do repozytorium.
 - Rozpoznawanie obrazu jest OCR w przeglądarce i wymaga potwierdzenia odczytanych wartości.
 - Analiza trendów nie jest diagnozą medyczną ani profesjonalnym planem treningowym; dane z różnych typów wysiłku należy interpretować oddzielnie.
+
+
+## v3.1 — poprawa OCR
+Dystans i czas są rozpoznawane z osobnych obszarów zrzutu Mi Fitness. Jeśli rozpoznawanie się nie powiedzie, importer nie wstawia niepewnej wartości.

@@ -1,5 +1,5 @@
-const CACHE='srodziemie-v300';
-const CORE=["./", "./index.html", "./style.css?v=3.0", "./app.js?v=3.0", "./manifest.webmanifest", "./chapter-2-przez-gory-i-mroki.jpg", "./icon-192.png", "./icon.svg", "./stop-lothlorien.jpg", "./icon-180.png", "./stop-ithilien.jpg", "./stop-bree.jpg", "./eriador-atlas.jpg", "./stop-anduina.jpg", "./stop-wichrowy-czub.jpg", "./stop-komarowe-bagna.jpg", "./icon-512.png"];
+const CACHE='srodziemie-v310';
+const CORE=["./", "./index.html", "./style.css?v=3.1", "./app.js?v=3.1", "./manifest.webmanifest", "./chapter-2-przez-gory-i-mroki.jpg", "./icon-192.png", "./icon.svg", "./stop-lothlorien.jpg", "./icon-180.png", "./stop-ithilien.jpg", "./stop-bree.jpg", "./eriador-atlas.jpg", "./stop-anduina.jpg", "./stop-wichrowy-czub.jpg", "./stop-komarowe-bagna.jpg", "./icon-512.png"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('srodziemie-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const req=e.request;if(req.method!=='GET')return;const url=new URL(req.url);if(url.origin!==self.location.origin)return;
