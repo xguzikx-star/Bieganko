@@ -1,3 +1,7 @@
+Śródziemie v4.6: usunięto automatyczny baner kopii zapasowej; ręczny eksport/import JSON pozostaje w Ustawieniach. Ujednolicono stylistykę, tło i metaliczne złoto.
+
+Wersja v4.5 – hero karta startowa, schowany górny nagłówek na mapie, szlachetniejsza złota kolorystyka.
+
 # Śródziemie — Droga Pierścienia v3.0
 
 Komplet plików do głównego katalogu repozytorium GitHub Pages. Rozpakuj bez tworzenia dodatkowego katalogu.

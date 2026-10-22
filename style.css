@@ -319,3 +319,217 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .atlas-card-footer{padding:18px 14px 16px}
   .atlas-card-footer p{font-size:13px;line-height:1.5}
 }
+
+
+/* v4.4 — kompaktowa karta mapy, aby mieściła się bez przewijania */
+.atlas-card{margin-bottom:12px}
+.atlas-card .map-stage,
+.atlas-card .map-stage:not(:has(.atlas-image)),
+.atlas-card .map-stage.world-stage{
+  height:clamp(300px, 46vh, 430px)!important;
+  aspect-ratio:auto!important;
+}
+.atlas-card .map-art,
+.atlas-card .map-art svg,
+.atlas-card .chapter-card-image{height:100%!important}
+.atlas-card-footer{padding:16px 16px 16px}
+.atlas-card-footer p{margin:0 auto 14px;font-size:14px;line-height:1.45;max-width:34ch}
+.atlas-card-stats span{padding:11px 8px;font-size:10px}
+.world-nav.atlas-card-nav{margin:10px 10px 14px}
+@media (max-width:430px){
+  .top{padding:calc(12px + env(safe-area-inset-top)) 16px 10px}
+  .top h1{font-size:20px;margin-top:4px}
+  .atlas-card-heading{padding:16px 16px 10px}
+  .atlas-card-heading h2{font-size:20px}
+  .atlas-card-heading small{font-size:9px;letter-spacing:1.8px}
+  .atlas-card .map-stage,
+  .atlas-card .map-stage:not(:has(.atlas-image)),
+  .atlas-card .map-stage.world-stage{
+    height:clamp(260px, 39vh, 360px)!important;
+  }
+  .atlas-card .map-tools{right:8px!important;gap:7px!important}
+  .atlas-card .map-tools button{width:32px!important;height:32px!important;font-size:18px!important}
+  .atlas-card-footer{padding:14px 12px 14px}
+  .atlas-card-footer p{font-size:12px;line-height:1.38;margin-bottom:12px;max-width:30ch}
+  .atlas-card-stats{gap:8px}
+  .atlas-card-stats span{padding:10px 6px;font-size:10px}
+}
+@media (max-width:390px){
+  .atlas-card .map-stage,
+  .atlas-card .map-stage:not(:has(.atlas-image)),
+  .atlas-card .map-stage.world-stage{
+    height:clamp(245px, 36vh, 330px)!important;
+  }
+}
+
+
+/* v4.5 · hero screen, spójna kolorystyka i szlachetny złoty */
+:root{
+  --bg:#07110f;
+  --panel:#0d1c19;
+  --panel2:#142824;
+  --text:#f2e7d3;
+  --dim:#b6b7a9;
+  --gold:#d5b47a;
+  --gold-soft:#f4e2b8;
+  --gold-mid:#d6b06c;
+  --gold-deep:#9b6a36;
+  --gold-shadow:#5c3a1c;
+  --gold-line:rgba(214,176,108,.58);
+  --green:#2f5d4f;
+}
+html,body{background:#06100f}
+.app{
+  background:
+    radial-gradient(110% 80% at 74% 0%, rgba(52,102,85,.34) 0%, rgba(23,49,41,.18) 28%, transparent 58%),
+    radial-gradient(80% 60% at 20% 22%, rgba(17,49,41,.45) 0%, transparent 56%),
+    linear-gradient(180deg,#081311 0%,#07100f 48%,#060d0d 100%);
+}
+.app.map-mode .top{
+  min-height:0;
+  padding:0;
+}
+.app.map-mode .top > div{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  padding:0 !important;
+  margin:-1px !important;
+  overflow:hidden !important;
+  clip:rect(0,0,0,0) !important;
+  white-space:nowrap !important;
+  border:0 !important;
+}
+.app.map-mode #settingsBtn{
+  position:fixed;
+  left:50%;
+  transform:translateX(min(288px, calc(50vw - 24px)));
+  top:calc(env(safe-area-inset-top) + 14px);
+  z-index:24;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  border:1px solid rgba(214,176,108,.45);
+  background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.12) 0 10%, rgba(9,25,21,.9) 42%, rgba(7,16,14,.94) 100%);
+  color:#e7cf9b;
+  box-shadow:0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,248,223,.09);
+}
+.app.map-mode #screen{padding-top:calc(env(safe-area-inset-top) + 8px)}
+.icon-btn{box-shadow:0 4px 18px rgba(0,0,0,.18)}
+
+.atlas-card.hero-atlas-card{margin:0 10px 10px;border-radius:26px;border:1px solid rgba(214,176,108,.55);background:linear-gradient(180deg,rgba(7,20,17,.98),rgba(7,17,15,.985));box-shadow:0 24px 48px rgba(0,0,0,.33), inset 0 1px 0 rgba(255,244,216,.03)}
+.atlas-card.hero-atlas-card .atlas-card-heading{
+  padding:20px 18px 12px;
+  background:
+    radial-gradient(115% 130% at 72% 0%, rgba(41,91,73,.58) 0%, rgba(18,44,37,.5) 28%, rgba(9,20,18,.98) 70%),
+    linear-gradient(180deg,#0b1715,#0b1715);
+}
+.atlas-card.hero-atlas-card .atlas-card-heading small,
+.top small,
+.eyebrow,
+.journey-heading .eyebrow,
+.world-nav span,
+.pill,
+.tag,
+.table th{color:#dec186}
+.atlas-card.hero-atlas-card .atlas-card-heading h2,
+.top h1,
+.section-title,
+.hero-title,
+.mini-title{color:#f3e7cf}
+
+.world-nav.atlas-card-nav{margin:10px 10px 16px;gap:10px}
+.world-nav button,
+.map-tools button,
+.secondary,
+.segmented button,
+.field input,.field select,.field textarea{
+  background:linear-gradient(180deg,rgba(13,28,24,.95),rgba(8,18,16,.96));
+  border-color:rgba(214,176,108,.5);
+  color:#ead8b1;
+}
+.world-nav .world-overview-btn,
+.primary,
+.toast{
+  background:linear-gradient(135deg,var(--gold-soft) 0%, #e6ca92 18%, var(--gold-mid) 45%, var(--gold-deep) 82%, #6d4726 100%);
+  color:#16120d;
+  border:1px solid rgba(250,231,188,.74);
+  box-shadow:inset 0 1px 0 rgba(255,252,242,.45), 0 6px 16px rgba(0,0,0,.18);
+}
+.primary:hover,.world-nav .world-overview-btn:hover{filter:brightness(1.03)}
+.bottom{
+  background:linear-gradient(180deg,rgba(7,17,15,.90),rgba(6,12,12,.97));
+  border-top:1px solid rgba(214,176,108,.25);
+}
+.bottom button{color:#a8aea4}
+.bottom button.active{color:#e5d0a3;text-shadow:0 0 14px rgba(214,176,108,.16)}
+.progress,
+.journey-progress{background:rgba(151,142,109,.18);border:1px solid rgba(214,176,108,.12)}
+.progress b,
+.journey-progress>div{
+  background:linear-gradient(90deg,var(--gold-soft) 0%, #e7cb93 22%, var(--gold-mid) 48%, var(--gold-deep) 78%, #76512d 100%);
+  box-shadow:0 0 12px rgba(214,176,108,.16);
+}
+.panel,
+.journal,
+.badge-card,
+.discover,
+.sheet,
+.backup-banner,
+.journey-dashboard{
+  border-color:rgba(214,176,108,.34);
+  background:linear-gradient(160deg,rgba(16,34,29,.92),rgba(8,16,15,.96));
+}
+.atlas-card-stats span,
+.pill,
+.tag,
+.journey-next,
+.journey-stats>div,
+.journey-chronicle{background:rgba(10,22,19,.68);border-color:rgba(214,176,108,.34)}
+.backup-banner{margin:8px 11px 14px}
+.link-btn{color:#e2c287}
+.chart .line{stroke:#d6b06c}
+.chart .bar{fill:#8ba395}
+
+@media (max-width:620px){
+  .app.map-mode #settingsBtn{left:auto;right:16px;transform:none}
+}
+@media (max-width:430px){
+  .app.map-mode #screen{padding-top:calc(env(safe-area-inset-top) + 6px)}
+  .atlas-card.hero-atlas-card{margin:0 8px 8px;border-radius:24px}
+  .atlas-card.hero-atlas-card .atlas-card-heading{padding:18px 16px 11px}
+  .world-nav.atlas-card-nav{margin:8px 8px 14px}
+  .backup-banner{margin:8px 8px 14px}
+}
+
+
+/* 4.6: szlachetne wykończenie — spójna zieleń i przygaszone metaliczne złoto */
+:root { --gold:#c6a77a; --gold-soft:#f2e2bf; --gold-mid:#c9a570; --gold-deep:#83603e; --gold-line:rgba(181,147,99,.46); --edge:#46534b; }
+.app { background: radial-gradient(75% 45% at 65% 4%,rgba(43,84,69,.20),transparent 70%),linear-gradient(145deg,#0c1b18 0%,#07120f 38%,#08110f 100%); }
+.app.map-mode #screen { padding-top:calc(env(safe-area-inset-top) + 5px); }
+.atlas-card.hero-atlas-card { border-color:rgba(187,154,106,.58); border-radius:22px;box-shadow:0 18px 42px rgba(0,0,0,.31),inset 0 1px rgba(251,232,189,.09); }
+.atlas-card.hero-atlas-card .atlas-card-heading {background:radial-gradient(110% 150% at 70% -25%,rgba(52,91,71,.42),transparent 68%),linear-gradient(180deg,#10241e,#091a15);}
+.atlas-card.hero-atlas-card .atlas-card-heading small {color:#d3b88a;letter-spacing:1.75px;}
+.atlas-card.hero-atlas-card .atlas-card-heading h2 {color:#f2e8d7;text-wrap:balance;}
+.atlas-card-footer {background:linear-gradient(180deg,#10211b 0%,#081713 100%);border-top-color:rgba(199,164,111,.24);}
+.atlas-card-footer p {color:#dcd1ba;}
+.atlas-card-stats span{color:#e1c79b!important;border-color:rgba(180,145,93,.52)!important;background:linear-gradient(155deg,rgba(27,46,36,.76),rgba(7,21,17,.92))!important;box-shadow:inset 0 1px rgba(255,255,255,.035);}
+.world-nav.atlas-card-nav button{border-color:rgba(187,151,101,.54);box-shadow:inset 0 1px rgba(242,222,184,.07);}
+.world-nav.atlas-card-nav .world-overview-btn,.primary{background:linear-gradient(125deg,#f0dcaf 0%,#d6b57f 29%,#ad8452 62%,#dfc18d 100%);border:1px solid #e7cca0;box-shadow:inset 0 1px rgba(255,245,224,.48),0 4px 12px #0003;color:#1a1913;}
+.panel,.journal,.journey-dashboard,.sheet {border-color:rgba(175,144,99,.33);background:linear-gradient(155deg,rgba(20,40,33,.94),rgba(8,20,17,.97));}
+.journey-dashboard {box-shadow:0 16px 35px #0003;}
+.journey-medallion {color:#dcc195;border-color:rgba(199,162,106,.56);}
+.bottom{background:linear-gradient(180deg,rgba(9,23,18,.93),rgba(5,15,12,.98));border-top-color:rgba(182,150,103,.32);}
+.bottom button.active{color:#d9bb8e;text-shadow:none;}
+.bottom button:not(.active){color:#9ca69a;}
+.map-tools button {border-color:#bd9c68!important;color:#e7d3a8!important;}
+.progress b,.journey-progress>div{background:linear-gradient(90deg,#9b7447,#e7cd99 42%,#c49a60 78%,#8b633c);}
+.backup-banner{display:none!important;}
+@media(max-width:430px){
+ .atlas-card.hero-atlas-card{margin:0 8px 8px}
+ .atlas-card.hero-atlas-card .atlas-card-heading{padding:17px 16px 10px}
+ .atlas-card.hero-atlas-card .atlas-card-heading h2{font-size:21px}
+ .atlas-card-footer{padding:12px 13px 13px}
+ .atlas-card-footer p{font-size:12px;margin-bottom:10px}
+ .atlas-card-stats span{padding:9px 6px}
+}
