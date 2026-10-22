@@ -404,3 +404,153 @@ function bindChapterSwipe(){
    if(n!==(selectedChapter||current)){selectedChapter=n;mapZoom=1;mapPan={x:0,y:0};render();}
  },{passive:true});
 }
+
+
+/* ===== v5.4 overrides: cleaner map UI, progress overlay, travel animation ===== */
+const CHAPTER_VISUALS={
+  1:[
+    {km:0,name:'Hobbiton',x:15,y:84},
+    {km:105,name:'Stary Las',x:29,y:72},
+    {km:215,name:'Bree',x:47,y:58},
+    {km:345,name:'Komarowe Bagna',x:42,y:45},
+    {km:450,name:'Wichrowy Czub',x:74,y:39},
+    {km:615,name:'Bród Bruinen',x:84,y:30},
+    {km:737,name:'Rivendell',x:96,y:15}
+  ],
+  2:[
+    {km:737,name:'Rivendell',x:14,y:10},
+    {km:940,name:'Hollin',x:30,y:31},
+    {km:1090,name:'Caradhras',x:53,y:49},
+    {km:1230,name:'Moria',x:56,y:68},
+    {km:1481,name:'Lothlórien',x:30,y:92}
+  ],
+  3:[
+    {km:1481,name:'Lothlórien',x:10,y:19},
+    {km:1710,name:'Anduina',x:35,y:41},
+    {km:1940,name:'Argonath',x:51,y:60},
+    {km:2107,name:'Rauros',x:88,y:82}
+  ],
+  4:[
+    {km:2107,name:'Rauros',x:4,y:9},
+    {km:2280,name:'Emyn Muil',x:17,y:29},
+    {km:2410,name:'Martwe Bagna',x:17,y:47},
+    {km:2540,name:'Ithilien',x:17,y:64},
+    {km:2680,name:'Cirith Ungol',x:29,y:80},
+    {km:2790,name:'Gorgoroth',x:61,y:92},
+    {km:2863,name:'Góra Przeznaczenia',x:85,y:75}
+  ]
+};
+let recentUnlockNames=[];
+function chapterVisualStops(ch){return CHAPTER_VISUALS[ch]||[]}
+function pointAtKm(ch,km){
+  const pts=chapterVisualStops(ch);if(!pts.length)return {x:50,y:50,name:''};
+  if(km<=pts[0].km)return pts[0];
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i],b=pts[i+1];
+    if(km<=b.km){
+      const span=Math.max(1,b.km-a.km),p=Math.max(0,Math.min(1,(km-a.km)/span));
+      return {x:a.x+(b.x-a.x)*p,y:a.y+(b.y-a.y)*p,name:b.name};
+    }
+  }
+  return pts[pts.length-1];
+}
+function visibleKmForChapter(ch,distance,currentChapter){
+  const meta=CHAPTERS[ch-1];
+  if(ch<currentChapter)return meta.goal;
+  if(ch>currentChapter)return meta.start;
+  return Math.max(meta.start,Math.min(meta.goal,distance));
+}
+function mapProgressOverlay(ch,distance,currentChapter){
+  const pts=chapterVisualStops(ch),visibleKm=visibleKmForChapter(ch,distance,currentChapter);
+  const currentPoint=pointAtKm(ch,visibleKm);
+  const nodes=pts.map((p,idx)=>{
+    const state=p.km<visibleKm-0.01?'done':Math.abs(p.km-visibleKm)<0.6?'current':(p.km<=visibleKm+0.01?'done':'future');
+    const fresh=recentUnlockNames.includes(p.name)?' new':'';
+    return `<button class="map-node ${state}${fresh}" data-stop-name="${esc(p.name)}" data-stop-km="${p.km}" aria-label="${esc(p.name)}" style="left:${p.x}%;top:${p.y}%"></button>`;
+  }).join('');
+  return `<div class="map-progress-overlay" aria-hidden="true">${nodes}<div class="map-traveler ${animating?'is-moving':''}" style="left:${currentPoint.x}%;top:${currentPoint.y}%"><span></span></div></div>`;
+}
+function stopIndexByKm(km){return stops.findIndex(s=>Math.abs(s.km-km)<1e-9)}
+function openStopByVisual(km){const idx=stopIndexByKm(km);if(idx>=0)goToStop(idx)}
+function renderMap(){
+ const distance=mapK(),currentChapter=chapterByDistance(Math.min(distance,TOTAL-.01)).id;
+ const chapter=Math.max(1,Math.min(currentChapter,selectedChapter||currentChapter));
+ const meta=CHAPTERS[chapter-1];
+ const roman=meta.roman;
+ const unlockedVisuals=chapterVisualStops(chapter).filter(s=>s.km<=visibleKmForChapter(chapter,distance,currentChapter)+0.01).length;
+ const totalVisuals=chapterVisualStops(chapter).length;
+ const chapterDistance=Math.min(Math.max(0,distance-meta.start),meta.goal-meta.start);
+ const lastWorkout=[...data.workouts].sort((a,b)=>b.date.localeCompare(a.date))[0];
+ const lastStop=[...discovered()].reverse()[0];
+ const sealsCount=Object.keys(data.seals||{}).length;
+ const swipeHint=currentChapter>1?'<div class="map-swipe-hint">Przesuń palcem w lewo lub w prawo, aby przeglądać odblokowane rozdziały.</div>':'';
+ return `<section class="map-shell"><div class="map-stage" id="mapStage" aria-label="Mapa rozdziału ${roman}"><div class="map-copy"><small class="eyebrow">ROZDZIAŁ ${roman} · ${fmt(meta.start)}–${fmt(meta.goal)} KM SZLAKU</small><h2>${esc(meta.title)}</h2><p>${esc(meta.intro)}</p></div><div class="map-art" id="mapArt"><img class="map-landscape chapter-portrait-image" src="${MAP_IMAGES[chapter]}" alt="${MAP_ALTS[chapter]}" draggable="false">${mapProgressOverlay(chapter,distance,currentChapter)}</div><div class="map-tools"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div><div class="map-bottom-hud"><div class="map-bottom-row"><span class="hud-pill map-chapter-pill">ROZDZIAŁ ${roman}</span><span class="hud-pill main-km">${fmt(chapterDistance)} / ${fmt(meta.goal-meta.start)} km</span></div><span class="hud-pill discovery">${unlockedVisuals} z ${totalVisuals} odkrytych punktów</span></div></div><div class="chapter-track" aria-label="Postęp rozdziałów">${CHAPTERS.map(c=>`<button class="chapter-dot ${c.id===chapter?'on':''} ${c.id>currentChapter?'future':''}" data-chapter-select="${c.id}" ${c.id>currentChapter?'disabled':''} aria-label="Rozdział ${c.roman}"></button>`).join('')}</div>${swipeHint}<div class="map-lower"><small class="eyebrow">NAJWAŻNIEJSZE ZAPISKI</small><h2>Ślady na szlaku</h2><div class="journey-feed"><button class="journey-feed-item" data-view-jump="training"><span class="feed-icon">↗</span><span><small>OSTATNI TRENING</small><strong>${lastWorkout?esc(lastWorkout.type):'Rozpocznij wędrówkę'}</strong><span>${lastWorkout?`${esc(lastWorkout.date)} · ${fmt(lastWorkout.km)} km${lastWorkout.minutes?' · '+fmt(lastWorkout.minutes)+' min':''}`:'Dodaj pierwszy trening, aby ruszyć ze szlakiem.'}</span></span><span class="feed-arr">›</span></button><button class="journey-feed-item" data-view-jump="chronicle"><span class="feed-icon">⌖</span><span><small>ODWIEDZONA LOKACJA</small><strong>${lastStop?esc(lastStop.name):'Przed Tobą pierwsze odkrycie'}</strong><span>${lastStop?`${fmt(lastStop.km)} km szlaku`:'Pierwsze miejsce odsłoni się po treningu.'}</span></span><span class="feed-arr">›</span></button><button class="journey-feed-item" data-view-jump="growth"><span class="feed-icon">✧</span><span><small>ZDOBYTE ODZNAKI</small><strong>${sealsCount?`${sealsCount} odznak`:'Pierwsza odznaka czeka'}</strong><span>${sealsCount?'Sprawdź cały rozwój wędrowca.':'Regularność szybko odblokuje pierwszą nagrodę.'}</span></span><span class="feed-arr">›</span></button></div></div></section>`;
+}
+function applyMapTransform(){
+ const art=$('#mapArt'),stage=$('#mapStage');
+ if(!art||!stage)return;
+ const mx=stage.clientWidth*(mapZoom-1)/2,my=stage.clientHeight*(mapZoom-1)/2;
+ mapPan={x:Math.max(-mx,Math.min(mx,mapPan.x)),y:Math.max(-my,Math.min(my,mapPan.y))};
+ art.style.transform=`translate(${mapPan.x}px,${mapPan.y}px) scale(${mapZoom})`;
+ stage.style.touchAction=mapZoom>1?'none':'pan-y';
+}
+function attachMap(){
+ mapZoom=1;mapPan={x:0,y:0};
+ const art=$('#mapArt'),stage=$('#mapStage');if(!art||!stage)return;
+ applyMapTransform();
+ stage.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{if(b.dataset.zoom==='reset'){mapZoom=1;mapPan={x:0,y:0}}else mapZoom=Math.max(1,Math.min(3,mapZoom+(b.dataset.zoom==='in'?.35:-.35)));applyMapTransform()});
+ let down=null;
+ stage.onpointerdown=e=>{if(mapZoom===1||e.target.closest('button')&&!e.target.closest('.map-node'))return;down={x:e.clientX,y:e.clientY,px:mapPan.x,py:mapPan.y};stage.setPointerCapture(e.pointerId)};
+ stage.onpointermove=e=>{if(!down)return;mapPan={x:down.px+e.clientX-down.x,y:down.py+e.clientY-down.y};applyMapTransform()};
+ stage.onpointerup=stage.onpointercancel=()=>down=null;
+ stage.querySelectorAll('[data-stop-km]').forEach(btn=>btn.addEventListener('click',()=>openStopByVisual(+btn.dataset.stopKm)));
+ document.querySelectorAll('[data-chapter-select]').forEach(btn=>btn.onclick=()=>{selectedChapter=+btn.dataset.chapterSelect;render()});
+}
+function bindChapterSwipe(){
+ const stage=document.getElementById('mapStage');if(!stage)return;
+ let start=null;
+ stage.addEventListener('touchstart',e=>{if(e.touches.length!==1||mapZoom>1){start=null;return}const t=e.touches[0];start={x:t.clientX,y:t.clientY}}, {passive:true});
+ stage.addEventListener('touchend',e=>{if(!start||mapZoom>1)return;const t=e.changedTouches[0];const dx=t.clientX-start.x,dy=t.clientY-start.y;start=null;
+   if(Math.abs(dx)<48||Math.abs(dx)<Math.abs(dy)*1.25)return;
+   const current=chapterByDistance(Math.min(mapK(),TOTAL-.01)).id;
+   const selected=selectedChapter||current;
+   const n=Math.max(1,Math.min(current,selected+(dx<0?1:-1)));
+   if(n!==selected){selectedChapter=n;mapZoom=1;mapPan={x:0,y:0};render();}
+ },{passive:true});
+}
+function animateTrail(from,to,done){
+ const stage=$('#mapStage');if(!stage||reduceMotion()||to<=from){displayK=null;recentUnlockNames=[];done();return}
+ const duration=Math.min(2600,900+(to-from)*10);
+ const t0=performance.now();
+ animating=true;
+ const step=now=>{
+   const p=Math.min(1,(now-t0)/duration),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+   displayK=from+(to-from)*e;
+   const current=chapterByDistance(Math.min(displayK,TOTAL-.01)).id;
+   if(!selectedChapter||selectedChapter>current)selectedChapter=current;
+   const art=stage.querySelector('.map-progress-overlay');
+   if(art){
+     const chapter=selectedChapter||current;
+     art.outerHTML=mapProgressOverlay(chapter,displayK,current);
+     stage.querySelectorAll('[data-stop-km]').forEach(btn=>btn.addEventListener('click',()=>openStopByVisual(+btn.dataset.stopKm)));
+   }
+   const kmEl=stage.querySelector('.main-km');
+   if(kmEl){
+     const meta=CHAPTERS[(selectedChapter||current)-1];
+     const chapterDistance=Math.min(Math.max(0,displayK-meta.start),meta.goal-meta.start);
+     kmEl.textContent=`${fmt(chapterDistance)} / ${fmt(meta.goal-meta.start)} km`;
+   }
+   if(p<1)requestAnimationFrame(step);else{animating=false;displayK=null;setTimeout(()=>{recentUnlockNames=[];const overlay=stage.querySelector('.map-progress-overlay');if(overlay){const current2=chapterByDistance(Math.min(travel(),TOTAL-.01)).id;overlay.outerHTML=mapProgressOverlay(selectedChapter||current2,travel(),current2);stage.querySelectorAll('[data-stop-km]').forEach(btn=>btn.addEventListener('click',()=>openStopByVisual(+btn.dataset.stopKm)));}},1200);done()}
+ };
+ requestAnimationFrame(step);
+}
+function celebrate(before){
+ const after=travel(),reached=stops.filter(s=>s.km>before&&s.km<=after),seals=syncSeals(false);
+ recentUnlockNames=reached.map(s=>s.name);
+ revealQueue=[...reached.map(stop=>({type:'stop',stop})),...seals.map(seal=>({type:'seal',seal}))];
+ if(after<=before){render();if(revealQueue.length)setTimeout(showReveal,300);return}
+ view='map';focused=null;selectedChapter=chapterByDistance(Math.min(after,TOTAL-.01)).id;displayK=before;render();
+ const stage=$('#mapStage');if(stage){const y=stage.getBoundingClientRect().top+scrollY-16;scrollTo({top:Math.max(0,y),behavior:reduceMotion()?'auto':'smooth'})}
+ setTimeout(()=>animateTrail(before,after,()=>{render();if(revealQueue.length)setTimeout(showReveal,450)}),360);
+}
+function render(){document.body.classList.toggle('view-map',view==='map');let labels={map:'Droga Pierścienia',training:'Dziennik treningów',chronicle:'Kronika podróży',growth:'Twoja kondycja'};$('#pageTitle').textContent=labels[view];$('#eyebrow').textContent=view==='map'?'WYPRAWA I • DROGA FRODA':'ŚRÓDZIEMIE • WYPRAWA I';$('#screen').innerHTML={map:renderMap,training:renderTraining,chronicle:renderChronicle,growth:renderGrowth}[view]();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#newWorkout')?.addEventListener('click',()=>workoutSheet());if(view==='map'){attachMap();bindChapterSwipe()} document.querySelectorAll('[data-view-jump]').forEach(b=>b.onclick=()=>setView(b.dataset.viewJump));bindBanner();$('#journalToggle')?.addEventListener('click',()=>{journalAll=!journalAll;render()})}
