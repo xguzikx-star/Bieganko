@@ -1,8 +1,8 @@
 const MAP_IMAGES={
-  1:'./chapter-portrait-1.jpg',
-  2:'./chapter-portrait-2.jpg',
-  3:'./chapter-portrait-3.jpg',
-  4:'./chapter-portrait-4.jpg'
+  1:'./chapter-portrait-1.jpg?v=20261022',
+  2:'./chapter-portrait-2.jpg?v=20261022',
+  3:'./chapter-portrait-3.jpg?v=20261022',
+  4:'./chapter-portrait-4.jpg?v=20261022'
 };
 const MAP_ALTS={
   1:'Ilustrowany atlas Eriadoru',
@@ -203,7 +203,7 @@ function sealSheet(id){
 
 function segmentsHtml(rows){return rows.map((r,i)=>`<div class="two segment" style="grid-template-columns:1.1fr .8fr .9fr auto"><select aria-label="Rodzaj odcinka" data-seg="kind"><option ${r.kind==='Marsz'?'selected':''}>Marsz</option><option ${r.kind==='Bieg'?'selected':''}>Bieg</option><option ${r.kind==='Rozgrzewka'?'selected':''}>Rozgrzewka</option><option ${r.kind==='Schłodzenie'?'selected':''}>Schłodzenie</option></select><input aria-label="Minuty odcinka" type="number" min="0.1" step="0.1" data-seg="minutes" value="${r.minutes||''}" placeholder="min"><input aria-label="Prędkość km/h" type="number" min="0" step="0.1" data-seg="speed" value="${r.speed||''}" placeholder="km/h"><button class="link-btn" type="button" data-remove-seg="${i}" aria-label="Usuń odcinek">×</button></div>`).join('')}
 function workoutSheet(id=null){let old=data.workouts.find(w=>w.id===id)||{},detail=!!old.segments?.length,segments=(old.segments||[{kind:'Rozgrzewka',minutes:5,speed:5},{kind:'Bieg',minutes:2,speed:8},{kind:'Marsz',minutes:3,speed:5.5}]);function content(){sheet(`<h2>${id?'Edytuj trening':'Nowa aktywność'}</h2><form id="workoutForm"><div class="field"><label>Data</label><input required name="date" type="date" value="${esc(old.date||new Date().toLocaleDateString('sv-SE'))}" max="${new Date().toLocaleDateString('sv-SE')}"></div><div class="field"><label>Rodzaj aktywności</label><select name="type"><option ${old.type==='Marsz'?'selected':''}>Marsz</option><option ${old.type==='Bieg'?'selected':''}>Bieg</option><option ${old.type==='Interwały'?'selected':''}>Interwały</option></select></div><div class="segmented"><button type="button" data-place="treadmill" class="${old.place!=='outdoors'?'selected':''}">Bieżnia</button><button type="button" data-place="outdoors" class="${old.place==='outdoors'?'selected':''}">Teren</button></div><div class="two"><div class="field"><label>Dystans (km)</label><input name="km" required type="number" inputmode="decimal" min="0.01" step="0.01" value="${esc(old.km??'')}"></div><div class="field"><label>Czas (min, opcjonalnie)</label><input name="minutes" type="number" inputmode="decimal" min="0" step="0.1" value="${esc(old.minutes??'')}"></div></div><div class="segmented"><button type="button" data-detail="off" class="${!detail?'selected':''}">Szybki zapis</button><button type="button" data-detail="on" class="${detail?'selected':''}">Dokładne interwały</button></div><div id="details" ${detail?'':'hidden'}><div class="field"><label>Segmenty: rodzaj / czas min / km/h</label><div id="segments" style="display:grid;gap:7px">${segmentsHtml(segments)}</div><button type="button" class="secondary" id="addSegment">+ Dodaj odcinek</button></div><p class="note">Segmenty pomagają analizować trening. Podstawą drogi jest wpisany dystans z bieżni, bez automatycznego wyliczania.</p></div><div class="two"><div class="field"><label>Najdłuższy ciągły bieg (min)</label><input name="longestRun" type="number" min="0" step="0.1" value="${esc(old.longestRun??'')}"></div><div class="field"><label>Wysiłek (1–10)</label><input name="rpe" type="number" min="1" max="10" step="1" value="${esc(old.rpe??'')}"></div></div><div class="two"><div class="field"><label>Łączny czas biegu (min)</label><input name="runMinutes" type="number" min="0" step="0.1" value="${esc(old.runMinutes??'')}"></div><div class="field"><label>Nachylenie bieżni (%)</label><input name="incline" type="number" min="0" step="0.5" value="${esc(old.incline??'')}"></div></div><div class="field"><label>Notatka</label><textarea name="notes" rows="2">${esc(old.notes??'')}</textarea></div><label class="tiny"><input type="checkbox" name="test" ${old.test?'checked':''}> To próba porównawcza</label><div class="sheet-actions"><button type="submit" class="primary">Zapisz trening</button>${id?'<button type="button" class="secondary danger" id="deleteWorkout">Usuń</button>':''}</div></form>`);let place=old.place||'treadmill';$('#sheet').querySelectorAll('[data-place]').forEach(btn=>btn.onclick=()=>{place=btn.dataset.place;$('#sheet').querySelectorAll('[data-place]').forEach(x=>x.classList.toggle('selected',x===btn))});$('#sheet').querySelectorAll('[data-detail]').forEach(btn=>btn.onclick=()=>{detail=btn.dataset.detail==='on';$('#details').hidden=!detail;$('#sheet').querySelectorAll('[data-detail]').forEach(x=>x.classList.toggle('selected',x===btn))});function collectSegments(){return [...$('#segments').querySelectorAll('.segment')].map(el=>({kind:el.querySelector('[data-seg="kind"]').value,minutes:+el.querySelector('[data-seg="minutes"]').value,speed:+el.querySelector('[data-seg="speed"]').value})).filter(x=>x.minutes>0)}$('#addSegment').onclick=()=>{segments=collectSegments();segments.push({kind:'Marsz',minutes:3,speed:5});$('#segments').innerHTML=segmentsHtml(segments);bindRemove()};function bindRemove(){$('#segments').querySelectorAll('[data-remove-seg]').forEach(b=>b.onclick=()=>{segments=collectSegments();segments.splice(+b.dataset.removeSeg,1);$('#segments').innerHTML=segmentsHtml(segments);bindRemove()})}bindRemove();$('#workoutForm').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),w={...old,id:id||crypto.randomUUID(),date:String(fd.get('date')),type:String(fd.get('type')),place,km:+fd.get('km'),minutes:fd.get('minutes')===''?null:+fd.get('minutes'),longestRun:fd.get('longestRun')===''?null:+fd.get('longestRun'),rpe:fd.get('rpe')===''?null:+fd.get('rpe'),runMinutes:fd.get('runMinutes')===''?null:+fd.get('runMinutes'),incline:fd.get('incline')===''?null:+fd.get('incline'),notes:String(fd.get('notes')),test:fd.has('test'),segments:detail?collectSegments():[]};if(!Number.isFinite(w.km)||w.km<=0||w.date>new Date().toLocaleDateString('sv-SE'))return toast('Sprawdź dystans i datę');const before=travel();if(id)data.workouts=data.workouts.map(t=>t.id===id?w:t);else data.workouts.push(w);localStorage.setItem(KEY,JSON.stringify(data));closeSheet();toast(`Zapisano ${fmt(w.km)} km. Szlak wydłużył się o ${fmt(w.km*SCALE)} km.`);celebrate(before)};if(id)$('#deleteWorkout').onclick=()=>{if(confirm('Usunąć ten trening? Pozycja na mapie zostanie przeliczona.')){data.workouts=data.workouts.filter(w=>w.id!==id);save();closeSheet();toast('Trening usunięty')}}}content()}
-function settings(){sheet(`<h2>Ustawienia i dane</h2><div class="panel"><p class="eyebrow">POSTĘP PODRÓŻY</p><div class="between"><b>Przelicznik</b><span>1 : 3</span></div><p class="note">${fmt(real())} km Twojej drogi zasiliło dotąd ${fmt(travel())} km szlaku.</p></div><div class="panel"><h3 class="mini-title">Kopia zapasowa</h3><p class="note">Dane znajdują się wyłącznie na tym urządzeniu. Regularnie pobieraj kopię JSON i zapisuj ją w Plikach lub iCloud Drive.</p><p class="note">${data.lastBackup?"Ostatnia kopia: "+new Date(data.lastBackup).toLocaleDateString("pl-PL"):"Nie pobrano jeszcze żadnej kopii."}</p><button class="primary" id="exportData">Pobierz kopię JSON</button><button class="secondary" id="importData" style="width:100%;margin-top:9px">Wczytaj kopię JSON</button></div><p class="note">Wersja 5.5</p>`);$('#exportData').onclick=exportBackup;$('#importData').onclick=()=>$('#importFile').click()}
+function settings(){sheet(`<h2>Ustawienia i dane</h2><div class="panel"><p class="eyebrow">POSTĘP PODRÓŻY</p><div class="between"><b>Przelicznik</b><span>1 : 3</span></div><p class="note">${fmt(real())} km Twojej drogi zasiliło dotąd ${fmt(travel())} km szlaku.</p></div><div class="panel"><h3 class="mini-title">Kopia zapasowa</h3><p class="note">Dane znajdują się wyłącznie na tym urządzeniu. Regularnie pobieraj kopię JSON i zapisuj ją w Plikach lub iCloud Drive.</p><p class="note">${data.lastBackup?"Ostatnia kopia: "+new Date(data.lastBackup).toLocaleDateString("pl-PL"):"Nie pobrano jeszcze żadnej kopii."}</p><button class="primary" id="exportData">Pobierz kopię JSON</button><button class="secondary" id="importData" style="width:100%;margin-top:9px">Wczytaj kopię JSON</button></div><p class="note">Wersja 5.7</p>`);$('#exportData').onclick=exportBackup;$('#importData').onclick=()=>$('#importFile').click()}
 $('#importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{let j=JSON.parse(await file.text());if(!Array.isArray(j.workouts)||j.workouts.some(w=>!(w.id&&/^\d{4}-\d\d-\d\d$/.test(w.date)&&Number.isFinite(+w.km)&&+w.km>0)))throw Error('Zły format danych');if(confirm(`Wczytać ${j.workouts.length} treningów? Obecne dane zostaną zastąpione.`)){data={...j,schema:j.schema||1,created:j.created||new Date().toISOString(),workouts:j.workouts};syncSeals(true);save();closeSheet();toast('Kopia została przywrócona')}}catch(err){toast('Nieprawidłowy plik kopii: '+err.message)}e.target.value=''});
 
 /* ---- Ekrany aplikacji ---- */
@@ -227,49 +227,29 @@ function renderGrowth(){
 }
 
 /* ---- Mapa i postęp na ilustrowanym szlaku ---- */
-// Coordinates use the native 344 × 660 artwork. Intermediate points follow
-// the painted trail; only the existing named stops become interactive buttons.
-const CHAPTER_PATHS={
- 1:[[[62,525],[83,521],[103,509],[120,491],[133,464],[140,436],[143,420]],
-    [[143,420],[150,398],[170,376],[197,356]],
-    [[197,356],[193,343],[194,330]],
-    [[194,330],[201,310],[217,290],[241,274],[258,257]],
-    [[258,257],[270,238],[282,213],[293,192]],
-    [[293,192],[306,175],[317,153],[323,116]]],
- 2:[[[89,84],[102,102],[124,115],[136,132],[137,147],[131,168],[134,193]],
-    [[134,193],[136,211],[147,231],[174,242],[197,258],[204,274],[204,286]],
-    [[204,286],[210,305],[233,320],[242,337],[239,352],[242,367]],
-    [[242,367],[236,394],[225,420],[222,444],[214,462],[199,475],[180,489],[170,507],[167,520]]],
- 3:[[[36,105],[35,132],[43,151],[66,164],[84,176],[89,197],[107,220]],
-    [[107,220],[119,250],[126,273],[148,281],[169,290],[179,308],[180,336],[180,368]],
-    [[180,368],[185,392],[200,419],[207,446],[208,464],[229,480],[243,489],[252,508],[272,512]]],
- 4:[[[11,99],[36,111],[54,125],[59,145],[55,174]],
-    [[55,174],[60,197],[77,219],[80,241],[76,264]],
-    [[76,264],[81,287],[76,307],[65,325],[64,345]],
-    [[64,345],[76,367],[86,386],[101,404],[105,420]],
-    [[105,420],[114,446],[126,472],[139,491],[161,509],[183,519],[205,525]],
-    [[205,525],[227,520],[248,503],[270,485],[293,471]]]
+// Routes are anchored to the NEW chapter artwork, as percentages of each image.
+// This avoids scaling errors between the 9:16 first illustration and 2:3 others.
+const CHAPTER_ANCHORS={
+  1:[[14,73.5],[24,65.5],[39.6,54],[45,48.5],[68.2,35.4],[79,29.5],[88,20.2]],
+  2:[[33.2,16.4],[47,30.8],[65.3,41.8],[68.2,57.4],[36.5,86.7]],
+  3:[[19,10.6],[45,29.2],[51.8,52.4],[77.2,86.2]],
+  4:[[68.6,84.5],[54.2,68.2],[56.4,56.6],[48.1,40.1],[68.3,17.5],[83,12],[75.5,5.7]]
 };
-let recentUnlockNames=[];
 function chapterVisualStops(ch){
- const meta=CHAPTERS[ch-1],chapterStops=stops.filter(s=>s.km>=meta.start&&s.km<=meta.goal);
- const paths=CHAPTER_PATHS[ch];
- return chapterStops.map((s,i)=>{const [x,y]=i===0?paths[0][0]:paths[i-1].at(-1);return {...s,x:x/344*100,y:y/660*100}});
+ const meta=CHAPTERS[ch-1], chapterStops=stops.filter(s=>s.km>=meta.start&&s.km<=meta.goal), anchors=CHAPTER_ANCHORS[ch];
+ return chapterStops.map((s,i)=>({...s,x:anchors[i][0],y:anchors[i][1]}));
 }
 function pointAtKm(ch,km){
  const pts=chapterVisualStops(ch);
  if(km<=pts[0].km)return pts[0];
  for(let i=0;i<pts.length-1;i++){
   const a=pts[i],b=pts[i+1];if(km>b.km)continue;
-  const path=CHAPTER_PATHS[ch][i],lengths=path.slice(1).map((p,j)=>Math.hypot(p[0]-path[j][0],p[1]-path[j][1]));
-  let remaining=Math.max(0,(km-a.km)/(b.km-a.km))*lengths.reduce((sum,n)=>sum+n,0);
-  for(let j=0;j<lengths.length;j++){
-   if(remaining<=lengths[j]||j===lengths.length-1){const t=Math.min(1,remaining/lengths[j]);return{x:(path[j][0]+(path[j+1][0]-path[j][0])*t)/344*100,y:(path[j][1]+(path[j+1][1]-path[j][1])*t)/660*100}}
-   remaining-=lengths[j];
-  }
+  const t=Math.max(0,Math.min(1,(km-a.km)/(b.km-a.km)));
+  return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
  }
  return pts.at(-1);
 }
+let recentUnlockNames=[];
 function visibleKmForChapter(ch,distance,currentChapter){
   const meta=CHAPTERS[ch-1];
   if(ch<currentChapter)return meta.goal;
