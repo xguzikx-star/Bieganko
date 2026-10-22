@@ -56,3 +56,7 @@ Karty rozdziałów są generowane z HTML/CSS/SVG, nie zawierają gotowych tekst�
 
 
 Wersja 5.1: mapa dominuje na ekranie, opisy rozdziałów są pod nagłówkiem, uproszczone sekcje bez ciężkich ramek.
+
+
+### v5.3 — grafiki rozdziałów
+Wszystkie cztery etapy wykorzystują dostarczone oryginalne ilustracje `chapter-portrait-1.jpg`…`chapter-portrait-4.jpg` w proporcji 344:660, bez rozciągania oraz bez drugiej nakładki tras i etykiet. Gest przewijania rozdziałów pozostaje aktywny dla odblokowanych rozdziałów. Ilustracje mają naniesione nazwy i znaczniki w samym obrazie; nie są one oddzielnymi interaktywnymi punktami. Pozostałe pliki zachowano dla kompatybilności.
