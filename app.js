@@ -230,6 +230,13 @@ function changeMapBrowse(direction){
  const nextIndex=((active-1+direction+5)%5)+1;
  setMapBrowse(nextIndex);
 }
+const PORTRAIT_HOTSPOTS={
+ 1:[[0,61,523],[2,195,357],[4,258,257],[6,322,85]],
+ 2:[[6,89,85],[7,134,193],[8,203,285],[9,242,367],[10,168,520]],
+ 3:[[10,51,99],[11,124,260],[12,195,397],[13,230,530]],
+ 4:[[13,48,100],[14,80,195],[15,96,292],[16,114,403],[17,191,506],[18,260,550],[19,293,468]]
+};
+function portraitHotspots(chapter){return `<svg class="portrait-hotspots" viewBox="0 0 344 660" preserveAspectRatio="none" aria-label="Odkryte i przyszłe miejsca">${(PORTRAIT_HOTSPOTS[chapter]||[]).map(([i,x,y])=>`<circle data-stop="${i}" role="button" tabindex="0" aria-label="${esc(stops[i].name)}" cx="${x}" cy="${y}" r="20" fill="transparent"/>`).join('')}</svg>`}
 function renderMap(){
  const distance=mapK(),chapterMeta=chapterByDistance(Math.min(distance,TOTAL-0.01)),chapter=chapterMeta.id,shown=mapBrowse||chapter,allMap=shown===5,shownMeta=CHAPTERS[shown-1]||chapterMeta;
  const goal=[737,1481,2107,2863][chapter-1],start=[0,737,1481,2107][chapter-1];
@@ -251,12 +258,12 @@ function renderMap(){
  const doneInChapter=stops.filter(s=>s.km>=viewedStart&&s.km<=viewedEnd&&s.km<=distance).length;
  const chapterStopCount=stops.filter(s=>s.km>=viewedStart&&s.km<=viewedEnd).length;
  const progressInView=Math.max(0,Math.min(viewedEnd-viewedStart,distance-viewedStart));
- return `<section class="atlas-card hero-atlas-card" aria-label="${allMap?'Atlas całej wyprawy':`Mapa rozdziału ${shownMeta.roman}`}" >
-  <header class="atlas-card-heading"><small>${allMap?'ATLAS CAŁEJ WYPRAWY':`ROZDZIAŁ ${shownMeta.roman} · ${fmt(viewedStart)}–${fmt(viewedEnd)} KM SZLAKU`}</small><h2>${allMap?'Droga Pierścienia':esc(shownMeta.title)}</h2></header>
-  <div class="atlas-card-map"><div class="map-stage ${allMap?'world-stage':'atlas-card-stage'}" id="mapStage"><div class="map-art" id="mapArt">${allMap?sharedAtlasSvg(5):`<img class="chapter-card-image" src="${CHAPTER_PANEL_IMAGES[shown]}" alt="${chapterMapAlt}" draggable="false">`}</div><div class="map-tools"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div></div></div>
-  <div class="atlas-card-footer"><p>${allMap?'Od Hobbitonu przez Rivendell, Morię i Anduinę aż po Górę Przeznaczenia.':esc(shownMeta.intro)}</p><div class="atlas-card-stats"><span>${allMap?discovered().length:doneInChapter} / ${allMap?stops.length:chapterStopCount} lokacji</span><span>${fmt(progressInView)} / ${fmt(viewedEnd-viewedStart)} km szlaku</span></div></div>
+ return `<section class="atlas-immersive" aria-label="${allMap?'Mapa całej wyprawy':`Mapa rozdziału ${shownMeta.roman}`}">
+  <div class="immersive-map" id="mapStage"><div class="map-art" id="mapArt">${allMap?sharedAtlasSvg(5):`<img class="immersive-image" src="${CHAPTER_PANEL_IMAGES[shown]}" alt="${chapterMapAlt}" draggable="false">`}</div></div>
+  <div class="immersive-head"><small>${allMap?'ATLAS ŚRÓDZIEMIA':`ROZDZIAŁ ${shownMeta.roman} · ${fmt(viewedStart)}–${fmt(viewedEnd)} KM SZLAKU`}</small><h2>${allMap?'Droga Pierścienia':esc(shownMeta.title)}</h2><p>${allMap?'Od Hobbitonu do Góry Przeznaczenia.':esc(shownMeta.intro)}</p></div>
+  <div class="map-tools"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div>
+  <div class="immersive-bottom"><div class="immersive-pager"><button id="mapPrevious" aria-label="Poprzedni rozdział">‹</button><span>${allMap?'Cała trasa':`Rozdział ${shownMeta.roman} / IV`}</span><button id="mapNext" aria-label="Następny rozdział">›</button></div><div class="immersive-info"><button class="map-progress-pill" id="mapOverview" aria-label="Pokaż całą trasę"><strong>${fmt(progressInView)} / ${fmt(viewedEnd-viewedStart)} km</strong><span>⌄</span></button><small>${allMap?discovered().length:doneInChapter} / ${allMap?stops.length:chapterStopCount} odkrytych miejsc</small></div></div>
  </section>
- <div class="world-nav atlas-card-nav" aria-label="Przeglądaj mapy"><button id="mapPrevious" aria-label="Poprzednia mapa">‹</button><span>${allMap?'Całe Śródziemie':`Rozdział ${shownMeta.roman} / IV`}</span><button id="mapNext" aria-label="Następna mapa">›</button><button id="mapOverview" class="world-overview-btn" aria-label="Pokaż całą trasę">Cała trasa</button></div>
  <section class="journey-dashboard">
  <div class="journey-heading"><div><small class="eyebrow">TWOJA WĘDRÓWKA</small><h2>Droga do ${esc(chapterGoalName)}</h2></div><span class="journey-medallion">✧</span></div>
  <div class="journey-mainstats"><div><span class="journey-number">${fmt(chapterDistance)}<small> / ${fmt(goal-start)} km</small></span><p>Przebyty szlak w tym rozdziale</p></div><div class="journey-percent">${pct.toFixed(1).replace('.',',')}<span>%</span></div></div>
