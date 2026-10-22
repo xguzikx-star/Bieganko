@@ -39,7 +39,7 @@ body.view-map .top .icon-btn{pointer-events:auto;background:rgba(7,17,15,.45);ba
 body.view-map .map-shell{padding:0;width:100%;max-width:none;margin:0}
 .map-hero{position:relative;isolation:isolate;width:100%;overflow:hidden;background:var(--bg)}
 .map-hero .map-stage{width:100%;margin:0}
-.map-hero .map-copy{position:absolute;z-index:3;left:0;right:0;top:0;margin:0;padding:clamp(130px,22vh,225px) 20px 60px;pointer-events:none}
+.map-hero .map-copy{position:absolute;z-index:3;left:0;right:0;top:0;margin:0;padding:clamp(45px,calc(22vh - 100px),125px) 20px 60px;pointer-events:none}
 .map-hero .map-copy::before{content:'';position:absolute;z-index:-1;inset:0 0 -120px;background:linear-gradient(to bottom,rgba(7,17,15,.84) 0%,rgba(7,17,15,.74) 32%,rgba(7,17,15,.48) 66%,rgba(7,17,15,0) 100%);pointer-events:none}
 .map-hero .map-copy .eyebrow{color:#efd29c;text-shadow:0 1px 7px rgba(0,0,0,.55)}
 .map-hero .map-copy h2{color:#fff4e0;text-shadow:0 2px 15px rgba(0,0,0,.7);font-size:clamp(39px,10vw,55px);max-width:12em}
