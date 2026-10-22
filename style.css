@@ -297,3 +297,79 @@ html,body{background:#05100d;color:var(--text);font:16px Inter,system-ui,sans-se
   .discover-rich{grid-template-columns:84px 1fr}
   .discover-rich img{width:84px;height:64px}
 }
+
+/* ===== v5.2 coherent editorial design ===== */
+html,body{overflow-x:hidden;max-width:100%}
+.app{overflow-x:clip;min-height:100dvh}
+.top{position:relative;z-index:12;padding-bottom:14px;background:#071310;backdrop-filter:none}
+.top h1{font-size:clamp(29px,7vw,42px);line-height:1.05}
+.page{padding-top:14px;padding-bottom:48px}
+.section-block{padding:0 0 24px;margin-bottom:24px}
+.section-header h2{font-size:clamp(37px,9vw,56px);line-height:.99;max-width:12ch;margin:9px 0 14px}
+.section-lead{font-size:15px;line-height:1.55;max-width:34ch;color:#c7c3b8}
+.page .pill{font-size:12px;background:none;border:0;border-bottom:1px solid #b9a06f5c;border-radius:0;padding:8px 1px}
+.tag-row{gap:20px;margin:16px 0 22px}
+.page .primary{border-radius:8px;padding:17px;background:#d3b47b;box-shadow:none;color:#111a15;font-size:15px}
+.page .secondary{border:1px solid #b9a06f52;border-radius:8px;background:transparent;font-size:14px;color:#e9d4ad}
+.entry-title{font-size:clamp(23px,6vw,32px)}
+.entry-head>.entry-title{font-size:clamp(25px,7vw,35px)!important;white-space:nowrap}
+.entry-meta{font-size:12px;line-height:1.7}
+.soft-title{font-size:clamp(32px,8vw,46px)!important;line-height:1.05}
+.summary-strip{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.summary-strip .value{font-size:clamp(28px,7vw,45px)}
+.summary-strip .label{font-size:11px;line-height:1.35}
+.mini-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mini-grid .stat b{font-size:clamp(27px,7vw,38px)}
+.mini-grid .stat span{font-size:11px}
+.discover-rich{grid-template-columns:112px minmax(0,1fr);gap:15px;padding:9px 0}
+.discover-rich img{width:112px;height:100px;border-radius:2px}
+.discover-rich h3{font-size:27px!important}
+.discover-rich .note{font-size:12px;line-height:1.5}
+.map-shell{margin:0;padding:0;min-height:0}
+.map-stage,.map-stage:not(:has(.atlas-image)),.map-stage:has(.atlas-image){width:100%;height:auto!important;min-height:0!important;max-height:none!important;aspect-ratio:1086/1448;overflow:hidden;background:#261f14;touch-action:pan-y}
+.map-stage .map-art,.map-stage:has(.atlas-image) .map-art{position:absolute;inset:0;width:100%;height:100%;transform-origin:center center}
+.map-stage .map-landscape,.map-stage .atlas-image{width:100%;height:100%;object-fit:fill!important}
+.map-stage .map-art>svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:auto}
+.map-stage:has(.atlas-image) .atlas-image{object-fit:cover!important;object-position:center}
+.map-stage:has(.atlas-image) .map-art>svg{height:100%;width:100%}
+.map-copy{position:absolute;top:0;left:0;right:0;max-width:none;z-index:4;padding:22px 20px 26px;background:linear-gradient(180deg,#09140fee, #09140fbb 65%,transparent);pointer-events:none}
+.map-copy .eyebrow{font-size:10px;letter-spacing:.19em}
+.map-copy h2{font-size:clamp(37px,9vw,56px);line-height:1.02;max-width:90%;margin-top:6px}
+.map-copy p{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(15px,4.2vw,23px);line-height:1.2;max-width:82%;margin-top:7px;color:#e7dbc3}
+.map-stage::before{z-index:1;background:linear-gradient(180deg,transparent 66%,#06100bc9 100%)}
+.map-stage .map-tools,.map-stage .map-tools.atlas-tools{position:absolute;z-index:5;left:auto;right:12px;top:45%;bottom:auto;transform:translateY(-50%);width:auto;height:auto;padding:0;background:transparent;box-shadow:none;display:flex;flex-direction:column;gap:7px}
+.map-stage .map-tools button,.map-stage .map-tools.atlas-tools button{width:39px!important;height:39px!important;aspect-ratio:1;border-radius:50%;font-size:23px;background:#08120cf2;border:1px solid #d2b279b8;color:#e6c78f}
+.map-bottom-hud{left:15px;right:15px;bottom:17px;z-index:6;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px}
+.map-bottom-hud .main-km{font-size:clamp(19px,5vw,28px);background:rgba(5,15,11,.9);border:1px solid #d2b179a6;padding:8px 16px;border-radius:40px}
+.map-discover-count{font:12px/1.3 Inter,sans-serif;color:#fff0cf;max-width:105px;text-align:right;text-shadow:0 2px 5px #08120d}
+.chapter-track{display:flex;gap:7px;justify-content:center;align-items:center;height:24px;background:#081410}
+.chapter-track i{width:18px;height:3px;background:#776f55;border-radius:2px}
+.chapter-track i.on{width:35px;background:#e6c384}
+.chapter-track i.future{opacity:.35}
+.map-lower{padding:32px 22px 52px}
+.map-lower h2{font:500 clamp(37px,9vw,52px)/1 'Cormorant Garamond',Georgia,serif;margin:9px 0 20px}
+.journey-feed{display:grid;gap:0}
+.journey-feed-item{width:100%;background:none;border:none;border-top:1px solid #c8a87345;color:inherit;padding:19px 0;display:grid;grid-template-columns:35px 1fr 16px;gap:12px;text-align:left;align-items:start}
+.journey-feed-item>span:nth-child(2){display:grid;gap:5px}
+.journey-feed-item small{font-size:10px;letter-spacing:.16em;color:#c4a36a}
+.journey-feed-item strong{font:500 27px/1.05 'Cormorant Garamond',Georgia,serif}
+.journey-feed-item span span{font-size:12px;color:#c6c2b3}
+.feed-icon{font:25px Georgia,serif;color:#d9b67a}
+.feed-arr{font-size:26px;color:#c4a36a}
+.bottom button em{font-size:12px;font-style:normal}
+.bottom{position:fixed;z-index:20;left:0;right:0;bottom:0;max-width:760px;margin:auto}
+@media(min-width:761px){.map-shell{max-width:640px;margin:auto}}
+@media(max-width:430px){.top{padding-inline:18px}.map-copy{padding:18px 17px 22px}.map-copy h2{font-size:42px}.map-copy p{font-size:17px}.map-stage .map-tools{right:10px}}
+
+/* Landscape atlas remains at native aspect ratio: never stretch cartography. */
+.map-stage:has(.atlas-image){aspect-ratio:1086/702!important}
+.map-stage:has(.atlas-image) .atlas-image{object-fit:fill!important}
+.map-stage:has(.atlas-image) .map-art>svg{aspect-ratio:1086/702}
+/* The header becomes a compact overlay on the map, not a second page title. */
+body.view-map .top{height:0;padding:0;z-index:30;position:relative;background:none}
+body.view-map .top>div{display:none}
+body.view-map .top .icon-btn{position:absolute;right:16px;top:20px;width:45px;height:45px;background:#07130eea}
+body.view-map .map-copy{padding-right:80px}
+body.view-map .map-copy h2{max-width:100%}
+body.view-map .map-copy p{max-width:100%}
+@media(max-width:430px){body.view-map .map-copy h2{font-size:38px}body.view-map .map-copy p{font-size:15px}}
