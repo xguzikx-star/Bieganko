@@ -296,27 +296,26 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .atlas-card-nav{margin:12px 13px 17px}
 @media(max-width:430px){.atlas-card-heading{padding:18px 16px 9px}.atlas-card-footer{padding:24px 12px 17px}.atlas-card-footer p{font-size:13px}.atlas-card-stats span{font-size:10px}}
 
-/* v4.1: restrained cartographic route, readable labels, one map per card */
-.atlas-card .map-stage.atlas-card-stage{aspect-ratio:0.88!important;}
-.atlas-card .map-stage.world-stage{aspect-ratio:1.49!important;}
-.atlas-card .refined-atlas{display:block;width:100%;height:100%;}
-.refined-atlas .atlas-label{fill:#2d291e;stroke:rgba(231,211,164,.95);stroke-width:3.3px;paint-order:stroke;stroke-linejoin:round;font:600 11px Marcellus,Georgia,serif;letter-spacing:.05px;filter:none!important;}
-.world-stage .refined-atlas .atlas-label{font-size:15px;stroke-width:4px;}
-.atlas-card-footer{margin-top:-70px!important;padding-top:74px!important;background:linear-gradient(180deg,rgba(7,19,16,0) 0%,rgba(7,19,16,.66) 15%,rgba(7,19,16,.97) 40%,#091512 75%)!important;}
-.atlas-card-heading{padding:16px 18px 12px!important;background:linear-gradient(180deg,#0a1514,#14251f)!important;}
-.atlas-card-heading h2{font-size:clamp(22px,4.5vw,30px)!important;}
-.atlas-card .map-tools button{width:30px!important;height:30px!important;font-size:15px!important;background:#091612d8!important;}
-@media(max-width:430px){.atlas-card-footer p{font-size:12px!important;line-height:1.5!important}.atlas-card-stats span{font-size:10px!important}.atlas-card .map-tools{top:8px!important;right:7px!important}}
 
-/* v4.2: cartographic chapter backgrounds, compact pins, visible whole-region maps */
-.atlas-card .map-stage.atlas-card-stage:not(:has(.atlas-image)){aspect-ratio:750/430!important;min-height:0!important;height:auto!important;}
-.atlas-card .map-art,.atlas-card .map-art svg{width:100%!important;height:100%!important;}
-.clean-chapter-svg .map-clean-label{font:15px Marcellus,Georgia,serif;paint-order:stroke;stroke:#e1cda4;stroke-width:3px;stroke-linejoin:round;fill:#302617;letter-spacing:.1px;}
-.atlas-card .atlas-card-footer{margin-top:-37px!important;padding:48px 16px 19px!important;background:linear-gradient(to bottom,rgba(7,19,16,0),#091512 48%,#091512 100%)!important;}
-.atlas-card .atlas-card-heading{background:#0a1915!important;}
-.atlas-card .atlas-card-map{background:#c2aa80;}
-.atlas-card .map-tools{top:8px!important;right:8px!important;}
-.atlas-card .map-tools button{width:29px!important;height:29px!important;font-size:15px!important;}
-/* v4.2.1 — preserve the native illustrated map aspect ratio on mobile */
-.atlas-card .map-stage.atlas-card-stage:not(:has(.atlas-image)){aspect-ratio:750/318!important;}
-.atlas-card .atlas-card-footer{margin-top:-22px!important;padding-top:38px!important;}
+/* v4.3 — pionowe karty tras w stylistyce zaakceptowanej ilustracji */
+.atlas-card{overflow:hidden;border-radius:24px;border:1px solid rgba(210,177,111,.55);background:linear-gradient(180deg,rgba(6,20,17,.98) 0%,rgba(7,25,20,.98) 100%);box-shadow:0 18px 40px rgba(0,0,0,.28)}
+.atlas-card-heading{padding:24px 22px 16px;background:radial-gradient(110% 120% at 70% 0%,rgba(45,82,67,.9) 0%,rgba(18,39,33,.88) 32%,rgba(7,19,16,.98) 68%),linear-gradient(180deg,#0a1514,#132520);}
+.atlas-card-heading h2{font:400 clamp(23px,5vw,33px) Marcellus,Georgia,serif;line-height:1.08}
+.atlas-card-map{padding:0 0 0;background:transparent}
+.atlas-card .map-stage,.atlas-card .map-stage:not(:has(.atlas-image)),.atlas-card .map-stage.world-stage{aspect-ratio:344/660!important;min-height:0!important;max-height:none!important;background:#0b1612;border-top:1px solid rgba(212,179,109,.2);border-bottom:0}
+.atlas-card .map-stage.world-stage{aspect-ratio:1.42!important}
+.atlas-card .map-art{position:absolute;inset:0;width:100%!important;height:100%!important}
+.chapter-card-image{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.atlas-card .map-tools{top:50%!important;right:12px!important;transform:translateY(-50%)!important;display:grid!important;gap:8px!important}
+.atlas-card .map-tools button{width:38px!important;height:38px!important;border-radius:50%!important;background:#08130fed!important;border:1px solid #d5b47b!important;color:#e8d09e!important;font-size:20px!important;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.atlas-card-footer{margin-top:0;padding:22px 18px 20px;background:radial-gradient(120% 140% at 70% -10%,rgba(31,82,63,.22) 0%,rgba(12,35,28,.08) 22%,transparent 48%),linear-gradient(180deg,rgba(6,19,16,.98),rgba(6,18,15,1));border-top:1px solid rgba(212,179,109,.2)}
+.atlas-card-footer p{font:15px/1.6 Marcellus,Georgia,serif;color:#f1e3c7;text-align:center;max-width:32ch;margin:0 auto 18px}
+.atlas-card-stats span{padding:13px 8px;border-radius:14px;background:rgba(7,22,18,.72)}
+.world-nav.atlas-card-nav{margin:14px 10px 18px}
+@media(max-width:430px){
+  .atlas-card-heading{padding:19px 16px 12px}
+  .atlas-card .map-tools{right:10px!important}
+  .atlas-card .map-tools button{width:34px!important;height:34px!important;font-size:18px!important}
+  .atlas-card-footer{padding:18px 14px 16px}
+  .atlas-card-footer p{font-size:13px;line-height:1.5}
+}

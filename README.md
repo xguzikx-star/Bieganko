@@ -49,12 +49,3 @@ Aktualizacja v3.9: widok Cała trasa otrzymał kartę hero w tym samym stylu co 
 
 ## v4.0 — interaktywne karty map
 Karty rozdziałów są generowane z HTML/CSS/SVG, nie zawierają gotowych tekstów ani wrysowanego postępu. Jeden atlas, aktywne znaczniki, licznik odkryć i przebyty dystans. Nie ma podwójnych map ani osobnych grafik typu hero-ch*.png.
-
-
-v4.1: Wyciszone oznaczenia trasy, proporcjonalne kadrowanie II–IV, subtelne etykiety i pojedyncza interaktywna karta. Grafika atlasu bazowego pozostaje ilustracją orientacyjną; precyzja kartograficzna względem kanonu wymaga nadal opracowania nowego tła.
-
-
-## v4.2
-Zmiana kart rozdziałów II–IV: nowe regionowe tła kartograficzne, kompaktowe znaczniki i linie SVG, bez duplikowania mapy pod kartą. Widok całości bazuje nadal na poprzednim atlasie i wymaga późniejszego dopracowania geograficznego.
-
-Uwaga: rozdziały II–IV używają nowych ilustracji kartograficznych z istniejącymi elementami szlaku w warstwie malarskiej. Dynamiczna warstwa SVG umożliwia obsługę lokacji i wskazuje bieżący postęp, ale tło nie jest jeszcze czystym atlasem bez trasy. To wersja robocza wizualnie bliższa Eriadorowi, nie docelowy atlas geograficzny.
