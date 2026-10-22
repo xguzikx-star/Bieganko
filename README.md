@@ -60,3 +60,34 @@ Wersja 5.1: mapa dominuje na ekranie, opisy rozdziałów są pod nagłówkiem, u
 
 ### v5.3 — grafiki rozdziałów
 Wszystkie cztery etapy wykorzystują dostarczone oryginalne ilustracje `chapter-portrait-1.jpg`…`chapter-portrait-4.jpg` w proporcji 344:660, bez rozciągania oraz bez drugiej nakładki tras i etykiet. Gest przewijania rozdziałów pozostaje aktywny dla odblokowanych rozdziałów. Ilustracje mają naniesione nazwy i znaczniki w samym obrazie; nie są one oddzielnymi interaktywnymi punktami. Pozostałe pliki zachowano dla kompatybilności.
+
+## v5.5 — układ mobilny i animowany szlak
+
+- Dolne menu ma cztery równe pola dotykowe, stałe wymiary ikon i odstęp na bezpieczny obszar iPhone’a. Końcówki ekranów pozostają dostępne ponad menu.
+- Nagłówek rozdziału, narzędzia i liczniki są poza ilustracją. Mapy zachowują proporcję 344:660, a zdjęcia lokacji naturalną wysokość. Ujednolicono Trening, Kronikę i Rozwój bez ciężkich gradientów i kartowych ramek.
+- Po zapisie znacznik porusza się wzdłuż namalowanej drogi, także przy przekraczaniu kilku rozdziałów. Animacja aktualizuje istniejący znacznik, zamiast przebudowywać interfejs w każdej klatce.
+- Odkrycia lokacji i odznak pokazują się kolejno. Odznaki i dziennik wyprawy są ponownie dostępne w ekranach aplikacji. Ustawienie ograniczenia ruchu pomija animacje.
+- Poziomy gest przegląda odblokowane rozdziały; przewijanie pionowe, anulowanie gestu i przesuwanie powiększonej mapy nie zmieniają rozdziału.
+- Klucz `srodziemie.v1` i format treningów pozostają zgodne. Edycja zachowuje dodatkowe pola treningu (np. tętno i strefy), a import/eksport JSON zachowuje dodatkowe pola kopii, w tym plan. Import kopii jest dostępny w Ustawieniach oraz Treningu. Dawny przycisk opisany jako import Mi Fitness otwierał wyłącznie importer JSON; etykieta odpowiada teraz jego działaniu.
+- Usunięto wielokrotne definicje funkcji i sprzeczne warstwy CSS; inicjalizacja następuje po deklaracji całego stanu aplikacji.
+
+### Weryfikacja
+
+```sh
+node --check app.js
+node --check sw.js
+node --check tests/mobile.cjs
+python -m http.server 8000 --bind 127.0.0.1
+```
+
+W drugim terminalu uruchom `node tests/mobile.cjs` z dostępnym pakietem `playwright` i przeglądarką Chromium. `BASE_URL` zmienia adres serwera; `CHROMIUM_PATH` pozwala wskazać systemową przeglądarkę. Przykład instalacji zależności poza repozytorium:
+
+```sh
+npm install --prefix ../work playwright
+../work/node_modules/.bin/playwright install chromium
+NODE_PATH=../work/node_modules node tests/mobile.cjs
+```
+
+Test obejmuje szerokości 320, 375, 390, 430 i 844 px, wszystkie cztery ekrany, bezpieczny obszar menu, ścieżki zasobów, stare treningi, edycję z dodatkowymi polami, eksport/import JSON, odrzucenie uszkodzonej kopii, animację przez granice rozdziałów, gesty, odznaki i ograniczenie ruchu. Emulacja dotyku w Chromium nie zastępuje końcowego sprawdzenia na fizycznym iPhonie w Safari i w trybie ekranu początkowego.
+
+Wdrożenie to standardowa publikacja plików statycznych z `main`. W adresach CSS i JavaScript ustawiono wersję `5.5`, aby przeglądarka pobrała nowe pliki. Nie zmieniaj domeny ani ścieżki uruchomienia aplikacji podczas aktualizacji, ponieważ dane localStorage są przypisane do jej originu.

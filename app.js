@@ -71,7 +71,7 @@ let data=load(),view='map',focused=null,mapZoom=1,mapPan={x:0,y:0},selectedChapt
 const $=s=>document.querySelector(s), fmt=n=>Number(n||0).toLocaleString('pl-PL',{maximumFractionDigits:1}), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const real=()=>data.workouts.reduce((s,w)=>s+Number(w.km||0),0); const travel=()=>Math.min(TOTAL,real()*SCALE);const next=()=>stops.find(s=>s.km>travel());const discovered=()=>stops.filter(s=>s.km<=travel());
 function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function setView(v){view=v;focused=null;render()}
+function setView(v){finishTrail();view=v;focused=null;render();scrollTo({top:0,behavior:'auto'})}
 function toast(message){document.querySelector('.toast')?.remove();let n=document.createElement('div');n.className='toast';n.textContent=message;document.body.append(n);setTimeout(()=>n.remove(),3200)}
 function closeSheet(){$('#overlay').hidden=true;$('#sheet').innerHTML=''}
 function sheet(html){$('#sheet').innerHTML='<button class="close" aria-label="Zamknij" id="closeSheet">×</button>'+html;$('#overlay').hidden=false;$('#closeSheet').onclick=closeSheet}
@@ -85,118 +85,10 @@ function goToStop(i){
  sheet(`<div class="sheet-stop-hero"><div class="illustration ${locked?'locked-art':'has-art'}">${locked?'<span class="mystery-symbol" aria-label="Miejsce nieodkryte">✧</span>':`<img src="${art}" alt="${esc(s.name)}">`}</div><small class="eyebrow">${chip}</small><h2>${locked?'Nieznane miejsce':esc(s.name)}</h2>${locked?`<p>${lead}</p>`:lead}</div>`)
 }
 
-function routeCurve(pts){
- const f=n=>Number(n).toFixed(1);
- if(pts.length<2)return '';
- let d=`M${f(pts[0].x)} ${f(pts[0].y)}`;
- for(let i=0;i<pts.length-1;i++){
-  const a=pts[Math.max(0,i-1)],b=pts[i],c=pts[i+1],e=pts[Math.min(pts.length-1,i+2)];
-  const c1={x:b.x+(c.x-a.x)/6,y:b.y+(c.y-a.y)/6};
-  const c2={x:c.x-(e.x-b.x)/6,y:c.y-(e.y-b.y)/6};
-  d+=` C${f(c1.x)} ${f(c1.y)} ${f(c2.x)} ${f(c2.y)} ${f(c.x)} ${f(c.y)}`;
- }
- return d;
-}
-
-function atlasMapSvg(){
- const k=Math.min(737,mapK());
- const waypoints=[{x:151,y:515,km:0,name:'Hobbiton'},{x:238,y:507,km:105,name:'Stary Las'},{x:456,y:362,km:215,name:'Bree'},{x:546,y:334,km:345,name:'Komarowe Bagna'},{x:695,y:209,km:450,name:'Wichrowy Czub'},{x:821,y:222,km:615,name:'Bród Bruinen'},{x:956,y:101,km:737,name:'Rivendell'}];
- const d='M151 515 C195 513 200 515 238 507 S363 408 456 362 S501 322 546 334 S637 242 695 209 S785 267 821 222 S897 137 956 101';
- let a=waypoints[0],b=waypoints[waypoints.length-1];
- for(let i=1;i<waypoints.length;i++){if(k<=waypoints[i].km){a=waypoints[i-1];b=waypoints[i];break}}
- const t=Math.max(0,Math.min(1,(k-a.km)/(b.km-a.km||1)));
- const x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;
- const progressLabel=k>0?`${fmt(k)} km`:'Start';
- const calloutRight=x<800;
- const width=150;
- const lx=calloutRight?x+30:x-30-width;
- const ly=Math.max(16,y-86);
- const hotspots=[{x:151,y:515,id:0},{x:238,y:507,id:1},{x:456,y:362,id:2},{x:546,y:334,id:3},{x:695,y:209,id:4},{x:821,y:222,id:5},{x:956,y:101,id:6}];
- const markers=waypoints.map((p,i)=>{const seen=p.km<=k;const major=[0,2,4,6].includes(i);const r=major?10.5:6.5;return `<g opacity="${seen?1:.95}"><circle cx="${p.x}" cy="${p.y}" r="${r+4}" fill="#07110dc4"/><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${seen?'#f3cc82':'#173027'}" stroke="${seen?'#fff0c3':'#bea26d'}" stroke-width="${major?2.7:1.9}"/></g>`}).join('');
- return `<svg class="atlas-overlay" viewBox="0 0 1086 702" preserveAspectRatio="none" aria-label="Interaktywna mapa Eriadoru"><defs><filter id="atlasglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="atlasshadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity=".42"/></filter></defs><path d="${d}" fill="none" stroke="#726342" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" opacity=".78"/><path d="${d}" fill="none" stroke="#f2cd87" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" pathLength="737" stroke-dasharray="${Math.max(0,k)} 737" filter="url(#atlasglow)"/><path d="${d}" fill="none" stroke="#fff2c3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" pathLength="737" stroke-dasharray="${Math.max(0,k)} 737" opacity=".98"/>${markers}<circle cx="${x}" cy="${y}" r="22" fill="#ecc47d" opacity=".22" filter="url(#atlasglow)"/><circle cx="${x}" cy="${y}" r="11" fill="#0d1712" stroke="#ffe8b2" stroke-width="3.5" filter="url(#atlasshadow)"/><circle cx="${x}" cy="${y}" r="4.7" fill="#ffdc8c" stroke="#6c4a1f" stroke-width="1.2"/><g filter="url(#atlasshadow)"><rect x="${lx}" y="${ly}" rx="14" ry="14" width="${width}" height="58" fill="#07120fe6" stroke="#cba96a" stroke-width="2"/><text x="${lx+width/2}" y="${ly+40}" text-anchor="middle" fill="#fff1c8" font-family="Marcellus,Georgia,serif" font-size="30">${progressLabel}</text></g>${hotspots.map(p=>`<circle class="atlas-hotspot" data-stop="${p.id}" tabindex="0" role="button" aria-label="Otwórz lokację" cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>`).join('')}</svg>`;
-}
-
-
-// v1.9.1: chapter II–IV pins are placed in the painted image's own pixel space (1086×1448),
-// so the SVG overlay and the illustration scale and crop identically.
-const CHAPTER_ART={
- 2:{first:6,last:10,pts:[[905,95],[365,395],[640,175],[785,745],[240,955]]},
- 3:{first:10,last:13,pts:[[225,205],[470,430],[815,700],[880,1080]]},
- 4:{first:13,last:19,pts:[[905,1235],[700,1170],[835,865],[395,975],[345,445],[680,310],[905,125]]}
-};
-function sampleRoute(pts){
- // Catmull-Rom style cubic segments (same as routeCurve) sampled into a polyline with cumulative length per stop.
- const seg=[];let total=0,cum=[0],poly=[{x:pts[0].x,y:pts[0].y,l:0}];
- for(let i=0;i<pts.length-1;i++){
-  const a=pts[Math.max(0,i-1)],b=pts[i],c=pts[i+1],e=pts[Math.min(pts.length-1,i+2)];
-  const c1={x:b.x+(c.x-a.x)/6,y:b.y+(c.y-a.y)/6},c2={x:c.x-(e.x-b.x)/6,y:c.y-(e.y-b.y)/6};
-  const at=t=>{const u=1-t;return{x:u*u*u*b.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*c.x,y:u*u*u*b.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*c.y}};
-  let prev=b;const samples=[{t:0,l:total}];
-  for(let j=1;j<=40;j++){const p=at(j/40);total+=Math.hypot(p.x-prev.x,p.y-prev.y);samples.push({t:j/40,l:total});prev=p}
-  seg.push({at,samples});cum.push(total);
- }
- return{seg,cum,total};
-}
-function mapSvg(chapterOverride){
- const k=mapK(),chapter=chapterOverride||(k<737?1:k<1481?2:k<2107?3:4),cfg=CHAPTER_ART[chapter]||CHAPTER_ART[4];
- const chapterStops=stops.slice(cfg.first,cfg.last+1),pts=cfg.pts.map(([x,y])=>({x,y}));
- const path=routeCurve(pts),route=sampleRoute(pts);
- let current=pts[0],done=0;
- if(k>=chapterStops.at(-1).km){current=pts.at(-1);done=route.total}
- else{const j=chapterStops.findIndex(q=>q.km>k);if(j>0){const a=chapterStops[j-1],b=chapterStops[j],t=Math.max(0,Math.min(1,(k-a.km)/(b.km-a.km)));const sg=route.seg[j-1];current=sg.at(t);const s1=sg.samples[Math.floor(t*40)],s2=sg.samples[Math.min(40,Math.floor(t*40)+1)];done=s1.l+(s2.l-s1.l)*(t*40-Math.floor(t*40))}}
- const anchors=chapterStops.map((stop,i)=>{const p=pts[i],seen=stop.km<=k,major=stop.kind==='major',r=major?15:10;
-  const label=seen||major?esc(stop.name):'?';const side=p.x>600?-1:1;
-  return `<g class="stop map-pin ${seen?'unlocked':'locked'}" data-stop="${cfg.first+i}" tabindex="0" role="button" aria-label="${seen?esc(stop.name):'Nieodkryte miejsce'}"><circle cx="${p.x}" cy="${p.y}" r="44" fill="transparent"/><circle cx="${p.x}" cy="${p.y}" r="${r+8}" fill="#06100cc8" opacity=".88"/><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${seen?'#d9b06f':'#10221b'}" stroke="${seen?'#ffe7b1':'#c1ad82'}" stroke-width="${major?4:3}"/><text x="${p.x+side*30}" y="${p.y-24}" text-anchor="${side>0?'start':'end'}" class="map-label chapter-label ${seen?'discovered':''}">${label}</text></g>`}).join('');
- const T=route.total.toFixed(1),D=Math.max(0,done).toFixed(1);
- return `<svg viewBox="0 0 1086 1448" preserveAspectRatio="xMidYMid slice" role="group" aria-label="Mapa wyprawy ze ścieżką i interaktywnymi miejscami"><defs><filter id="mapglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter></defs><path d="${path}" fill="none" stroke="#3c3324" stroke-width="13" stroke-linejoin="round" stroke-linecap="round" opacity=".55"/><path d="${path}" fill="none" stroke="#f6e7c2" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2 16" opacity=".85"/><path d="${path}" fill="none" stroke="#f1cc85" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${D} ${T}" style="filter:drop-shadow(0 0 6px #d9ac5f)"/><path d="${path}" fill="none" stroke="#fff0bb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="${D} ${T}" opacity=".96"/>${anchors}<g pointer-events="none"><circle cx="${current.x}" cy="${current.y}" r="34" fill="#ecc47d" opacity=".3" filter="url(#mapglow)"/><circle cx="${current.x}" cy="${current.y}" r="18" fill="#0f1813" stroke="#f2c37b" stroke-width="4"/><circle cx="${current.x}" cy="${current.y}" r="8" fill="#ffecbd" stroke="#ae7645" stroke-width="2"/></g></svg>`;
-}
-
-function positionAt(k){if(k<=0)return stops[0];for(let i=1;i<stops.length;i++){if(k<=stops[i].km){let a=stops[i-1],b=stops[i],t=(k-a.km)/(b.km-a.km);return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}}}return stops.at(-1)}
-
-function renderMap(){
- const distance=mapK(),chapterMeta=chapterByDistance(Math.min(distance,TOTAL-0.01)),chapter=chapterMeta.id;
- const goal=[737,1481,2107,2863][chapter-1],start=[0,737,1481,2107][chapter-1];
- const chapterDistance=Math.max(0,distance-start);
- const nextStop=next();
- const nextStopDistance=Math.max(0,(nextStop?.km-distance||0)/SCALE);
- const chapterRemaining=Math.max(0,(goal-distance)/SCALE);
- const pct=Math.min(100,Math.max(0,100*(distance-start)/(goal-start)));
- const last=[...data.workouts].sort((a,b)=>b.date.localeCompare(a.date))[0];
- const names=CHAPTERS.map(c=>c.title);
- const chapterRoman=['I','II','III','IV'][chapter-1];
- const chapterGoalName=stops.find(s=>s.km===goal)?.name||'celu';
- const lastEntry=journalEntries().at(-1);
- const note=lastEntry?esc(lastEntry.text):nextStop?`Droga wiedzie ku kolejnemu odkryciu. Jeszcze ${fmt(nextStopDistance)} km dzieli Cię od ${esc(nextStop.name)}.`:'Dotarłaś do kresu Drogi Pierścienia. Kronika zachowa tę wyprawę w całości.';
- const chapterMapSrc=MAP_IMAGES[chapter]||MAP_IMAGES[4];
- const chapterMapAlt=MAP_ALTS[chapter]||'Ilustrowana mapa wyprawy';
- return `${backupBanner()}<section class="journey-intro"><div class="journey-rule"><span>✦</span><small>ROZDZIAŁ ${chapterRoman} · WYPRAWA I</small><span>✦</span></div><h2>${names[chapter-1]}</h2><p>${esc(chapterMeta.intro)}</p></section>
- <div class="map-frame"><div class="map-stage" id="mapStage"><div class="map-art" id="mapArt">${chapter===1?`<img class="map-landscape atlas-image" src="${chapterMapSrc}" alt="${chapterMapAlt}" draggable="false">${atlasMapSvg()}`:`<img class="map-landscape" src="${chapterMapSrc}" alt="${chapterMapAlt}" draggable="false">${mapSvg()}`}</div><div class="map-tools${chapter===1?' atlas-tools':''}"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div></div><div class="map-frame-caption"><span>✧ AKTUALNY SZLAK</span><span>DROGA OŻYWA WRAZ Z POSTĘPEM</span></div></div>
- <section class="journey-dashboard">
- <div class="journey-heading"><div><small class="eyebrow">TWOJA WĘDRÓWKA</small><h2>Droga do ${esc(chapterGoalName)}</h2></div><span class="journey-medallion">✧</span></div>
- <div class="journey-mainstats"><div><span class="journey-number">${fmt(chapterDistance)}<small> / ${fmt(goal-start)} km</small></span><p>Przebyty szlak w tym rozdziale</p></div><div class="journey-percent">${pct.toFixed(1).replace('.',',')}<span>%</span></div></div>
- <div class="journey-progress" role="progressbar" aria-valuenow="${pct.toFixed(1)}" aria-valuemin="0" aria-valuemax="100"><div style="width:${pct}%"></div></div>
- <div class="journey-next"><div class="journey-next-icon">⌖</div><div><small>KOLEJNY ETAP</small><strong>${nextStop?esc(nextStop.name):'Wyprawa ukończona'}</strong><p>${nextStop?`Do ${esc(nextStop.name)} pozostało ${fmt(nextStopDistance)} km Twojej drogi.`:'Wszystkie etapy tej wyprawy zostały odsłonięte.'}</p></div></div>
- <div class="journey-stats"><div><span>✦</span><strong>${fmt(real())} km</strong><small>Twój dystans</small></div><div><span>➜</span><strong>${fmt(distance)} km</strong><small>Przebyty szlak</small></div><div><span>◈</span><strong>${fmt(chapterRemaining)} km</strong><small>Do końca rozdziału</small></div></div>
- <div class="journey-chronicle"><div><small class="eyebrow">Z KRONIKI PODRÓŻY</small><span>✧</span></div><p>${note}</p>${last?`<small>Ostatni zapis w kronice: ${esc(last.date)} · ${esc(last.type)} · ${fmt(last.km)} km</small>`:'<small>Zapisz pierwszy trening, aby rozpocząć kronikę.</small>'}</div>
- <button class="primary journey-add" id="newWorkout">＋ Dodaj trening</button>
- </section>`;
-}
-
-function renderTraining(){let ws=[...data.workouts].sort((a,b)=>b.date.localeCompare(a.date));return `<div class="page"><div class="panel"><div class="between"><div><small class="eyebrow">REJESTR AKTYWNOŚCI</small><h2 class="section-title" style="margin:8px 0">Twój dziennik</h2></div><span class="pill">${ws.length} treningów</span></div><button class="primary" id="newWorkout">+ Zapisz trening</button></div><div class="panel"><div class="metrics"><div><strong>${fmt(real())}</strong><small>Kilometry</small></div><div><strong>${fmt(ws.reduce((s,w)=>s+(+w.minutes||0),0)/60)}</strong><small>Godziny</small></div><div><strong>${fmt(ws.length?real()/ws.length:0)}</strong><small>Średni trening km</small></div></div></div><div class="panel"><h2 class="section-title">Historia aktywności</h2>${ws.length?ws.map(w=>`<div class="list-row"><div><strong>${esc(w.type)} · ${fmt(w.km)} km</strong><small>${esc(w.date)} · ${w.place==='treadmill'?'Bieżnia':'Teren'}${w.minutes?' · '+fmt(w.minutes)+' min':''}${w.runMinutes?' · bieg '+fmt(w.runMinutes)+' min':''}</small></div><button class="secondary" data-edit="${esc(w.id)}">Edytuj</button></div>`).join(''):'<div class="empty">Jeszcze nie ma treningów. Dodaj pierwszy albo wpisz wcześniejsze aktywności.</div>'}</div></div>`}
 function weeklyStreak(){const keys=new Set(data.workouts.map(w=>weekKey(w.date)));if(!keys.size)return 0;let day=new Date();day.setHours(12,0,0,0);let n=0;for(let i=0;i<520;i++){const key=weekKey(day.toISOString().slice(0,10));if(keys.has(key))n++;else if(i!==0)break;day.setDate(day.getDate()-7)}return n}
 function weekKey(s){const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+4-(d.getDay()||7));return d.getFullYear()+'-'+String(Math.ceil((((d-new Date(d.getFullYear(),0,1))/864e5)+1)/7)).padStart(2,'0')}
 
-function renderChronicle(){
- const done=discovered(),future=stops.filter(s=>s.km>travel());
- const upcomingGroups=CHAPTERS.map(ch=>({
-   ...ch,
-   stops: future.filter(s=>s.km>ch.start && s.km<=ch.goal).slice(0,4)
- })).filter(g=>g.stops.length);
- return `<div class="page"><div class="panel"><small class="eyebrow">KRONIKA WYPRAWY</small><h2 class="section-title" style="margin:8px 0">Odkryte miejsca</h2><div class="statsline"><span class="muted">Odkrycia</span><b>${done.length} / ${stops.length}</b></div><div class="progress"><b style="width:${100*done.length/stops.length}%"></b></div></div>${sealsPanel()}${journalPanel()}<h3 class="mini-title chronicle-sub">Odkryte miejsca</h3>${[...done].reverse().map(s=>`<button class="discover discover-rich" data-stop="${stops.indexOf(s)}" style="display:grid;text-align:left;width:100%;color:inherit;margin:0 0 11px"><img src="${stopArt(s)}" alt="${esc(s.name)}"><div class="discover-copy"><span class="eyebrow">${s.kind==='major'?'KAMIEŃ MILOWY':'ODKRYCIE'} · ${fmt(s.km)} KM SZLAKU</span><h3 class="mini-title">✧ ${esc(s.name)}</h3><span class="muted tiny">${esc(s.desc)}</span></div></button>`).join('')}<div class="panel"><h3 class="mini-title">Pozostałe etapy podróży</h3>${upcomingGroups.map(g=>`<div class="chronicle-group"><div class="list-row"><div><strong>Rozdział ${g.roman} · ${esc(g.title)}</strong></div><small>${esc(g.route)}</small></div>${g.stops.map(s=>`<div class="list-row"><div>🔒 ${esc(s.name)}</div><small>za ${fmt((s.km-travel())/SCALE)} km Twojej drogi</small></div>`).join('')}</div>`).join('')}</div></div>`
-}
-
 function barsChart(){const now=new Date(),samples=[];for(let i=7;i>=0;i--){let monday=new Date(now);monday.setDate(monday.getDate()-((monday.getDay()+6)%7)-i*7);const key=weekKey(monday.toISOString().slice(0,10));samples.push({key,km:data.workouts.filter(w=>weekKey(w.date)===key).reduce((s,w)=>s+(+w.km),0)})}let max=Math.max(5,...samples.map(s=>s.km));return `<svg class="chart" viewBox="0 0 330 155" role="img" aria-label="Dystans w ostatnich ośmiu tygodniach">${[0,1,2,3].map(i=>`<line class="gridline" x1="24" x2="318" y1="${125-i*35}" y2="${125-i*35}"/>`).join('')}${samples.map((s,i)=>`<rect class="bar" x="${35+i*36}" y="${125-98*s.km/max}" width="20" height="${98*s.km/max}" rx="3"/><text x="${45+i*36}" y="147" text-anchor="middle">${i+1}</text>`).join('')}</svg>`}
-function renderGrowth(){let ws=data.workouts,minutes=ws.reduce((s,w)=>s+(+w.minutes||0),0),best=Math.max(0,...ws.filter(w=>w.type==='Bieg').map(w=>+w.km)),maxRun=Math.max(0,...ws.map(w=>+(w.longestRun||0))),withPace=ws.filter(w=>w.minutes>0&&w.km>0),totalPace=withPace.reduce((s,w)=>s+w.minutes,0)/Math.max(.01,withPace.reduce((s,w)=>s+w.km,0));return `<div class="page"><div class="panel"><small class="eyebrow">TWOJA KONDYCJA</small><h2 class="section-title" style="margin:8px 0 18px">Rozwój wytrzymałości</h2><div class="metrics"><div><strong>${fmt(real())}</strong><small>Przebyte km</small></div><div><strong>${fmt(minutes/60)}</strong><small>Godziny</small></div><div><strong>${weeklyStreak()}</strong><small>Seria tygodni</small></div></div></div><div class="panel"><h3 class="mini-title">Kilometry w ostatnich 8 tygodniach</h3>${barsChart()}<p class="note">Tydzień 1 = najstarszy. Wykres obejmuje marsz, bieg i interwały.</p></div><div class="two"><div class="panel"><div class="eyebrow">NAJDŁUŻSZY BIEG</div><h2 class="hero-title">${fmt(best)} km</h2><span class="note">Trening typu bieg</span></div><div class="panel"><div class="eyebrow">BIEG CIĄGŁY</div><h2 class="hero-title">${fmt(maxRun)} min</h2><span class="note">Jeśli zapisany</span></div></div><div class="panel"><h3 class="mini-title">Średnie tempo</h3><div class="hero-title">${withPace.length?fmt(totalPace)+' min/km':'—'}</div><p class="note">Średnia ważona dla wpisów zawierających czas. Zróżnicowane marsze i biegi analizuj osobno.</p></div><div class="panel"><h3 class="mini-title">Próby porównawcze</h3><p class="muted">Oznaczaj wybrane treningi jako próby, aby porównać wyniki przy podobnych warunkach.</p>${ws.filter(w=>w.test).length?ws.filter(w=>w.test).sort((a,b)=>a.date.localeCompare(b.date)).map(w=>`<div class="list-row"><div><b>${esc(w.date)}</b><small>${fmt(w.km)} km · ${fmt(w.minutes)} min · wysiłek ${w.rpe||'—'}/10</small></div></div>`).join(''):'<p class="note">Brak zapisanych prób. Możesz oznaczyć trening podczas jego dodawania lub edycji.</p>'}</div></div>`}
 
 /* ===== v2.0: animacja wędrówki, ekran odkrycia, dziennik wyprawy, pieczęcie, przypomnienie o kopii ===== */
 let displayK=null,animating=false,journalAll=false;
@@ -204,7 +96,6 @@ const mapK=()=>displayK??travel();
 const reduceMotion=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const hashStr=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const pickBy=(arr,seed,salt=0)=>arr[(hashStr(seed+':'+salt))%arr.length];
-const daysSince=iso=>iso?Math.floor((Date.now()-new Date(iso).getTime())/864e5):Infinity;
 
 /* ---- Dziennik wyprawy: wpis generowany z miejsca na szlaku i rodzaju treningu ---- */
 const J_OPEN={
@@ -266,7 +157,8 @@ function syncSeals(silent){
  for(const s of SEALS)if(!data.seals[s.id]&&s.test()){data.seals[s.id]=new Date().toISOString();if(!silent&&!first)fresh.push(s)}
  localStorage.setItem(KEY,JSON.stringify(data));return fresh;
 }
-const sealHtml=(s,earned,big)=>`<div class="seal ${earned?'earned':'locked'} ${big?'seal-big':''}" aria-hidden="true"><span>${s.sym}</span></div>`;
+const sealArt=s=>s.id?'./badge-art-'+String(SEALS.findIndex(item=>item.id===s.id)%12+1).padStart(2,'0')+'.png':null;
+const sealHtml=(s,earned,big)=>`<div class="seal ${earned?'earned':'locked'} ${big?'seal-big':''}" aria-hidden="true">${sealArt(s)?`<img src="${sealArt(s)}" alt="">`:`<span>${s.sym}</span>`}</div>`;
 
 /* ---- Ekran odkrycia ---- */
 let revealQueue=[];
@@ -280,34 +172,14 @@ function showReveal(){
   el.innerHTML=`<div class="reveal-card"><div class="reveal-art"><img src="${stopArt(s)}" alt="${esc(s.name)}"><div class="reveal-seal">${sealHtml({sym:'✧'},true,true)}</div></div><div class="reveal-body"><small class="eyebrow">${s.kind==='major'?'KAMIEŃ MILOWY':'NOWE MIEJSCE ODKRYTE'} · ${fmt(s.km)} KM SZLAKU</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p>${ch?`<div class="reveal-chapter"><b>Rozdział ${ch.roman} zakończony.</b>${nextCh?` Otwiera się rozdział ${nextCh.roman}: <i>${esc(nextCh.title)}</i>.`:' Wyprawa dobiegła końca.'}</div>`:''}<button class="primary" id="revealNext">${more}</button></div></div>`;
  }else{
   const s=item.seal;
-  el.innerHTML=`<div class="reveal-card reveal-seal-card"><div class="reveal-sealstage">${sealHtml(s,true,true)}</div><div class="reveal-body"><small class="eyebrow">NOWA PIECZĘĆ W KRONICE</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p><button class="primary" id="revealNext">${more}</button></div></div>`;
+  el.innerHTML=`<div class="reveal-card reveal-seal-card"><div class="reveal-sealstage">${sealHtml(s,true,true)}</div><div class="reveal-body"><small class="eyebrow">NOWA ODZNAKA W KRONICE</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p><button class="primary" id="revealNext">${more}</button></div></div>`;
  }
  document.body.append(el);requestAnimationFrame(()=>el.classList.add('in'));
- el.querySelector('#revealNext').onclick=()=>{el.classList.remove('in');setTimeout(()=>{el.remove();if(revealQueue.length)showReveal()},220)};
+ el.querySelector('#revealNext').onclick=()=>{el.classList.remove('in');setTimeout(()=>{el.remove();if(revealQueue.length)showReveal();else{setView('chronicle');scrollTo({top:0,behavior:'auto'})}},reduceMotion()?0:220)};
  el.querySelector('#revealNext').focus({preventScroll:true});
 }
 
 /* ---- Animacja: znacznik przechodzi po trasie od starej do nowej pozycji ---- */
-function animateTrail(from,to,done){
- const art=$('#mapArt');if(!art||reduceMotion()||to<=from){displayK=null;done();return}
- const chFrom=chapterByDistance(from),target=Math.min(to,chFrom.goal-0.01),dur=Math.min(2600,900+(target-from)*25);
- const t0=performance.now();animating=true;
- const step=now=>{
-  const p=Math.min(1,(now-t0)/dur),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
-  displayK=from+(target-from)*e;
-  const svg=art.querySelector('svg');if(svg)svg.outerHTML=chFrom.id===1?atlasMapSvg():mapSvg();
-  if(p<1)requestAnimationFrame(step);else{animating=false;displayK=null;done()}
- };
- requestAnimationFrame(step);
-}
-function celebrate(before){
- const after=travel(),reached=stops.filter(s=>s.km>before&&s.km<=after),seals=syncSeals(false);
- revealQueue=[...reached.map(stop=>({type:'stop',stop})),...seals.map(seal=>({type:'seal',seal}))];
- if(after<=before){render();if(revealQueue.length)setTimeout(showReveal,300);return}
- view='map';focused=null;selectedChapter=null;displayK=before;render();
- const fr=$('.map-frame');if(fr){const y=fr.getBoundingClientRect().top+scrollY-Math.max(12,(innerHeight-fr.offsetHeight)/2-40);scrollTo({top:Math.max(0,y),behavior:reduceMotion()?'auto':'smooth'})}
- setTimeout(()=>animateTrail(before,after,()=>{render();if(revealQueue.length)setTimeout(showReveal,450)}),700);
-}
 
 /* ---- Kopia zapasowa ---- */
 function exportBackup(){
@@ -315,23 +187,9 @@ function exportBackup(){
  a.href=URL.createObjectURL(blob);a.download='srodziemie-kopia-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
  data.lastBackup=new Date().toISOString();delete data.backupSnooze;save();toast('Kopia pobrana. Zapisz ją w Plikach lub iCloud Drive.');
 }
-function backupBanner(){
- if(!data.workouts.length)return '';
- const since=daysSince(data.lastBackup);
- if(since<7||daysSince(data.backupSnooze)<3)return '';
- const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
- const when=data.lastBackup?`Ostatnia kopia: ${since} ${since===1?'dzień':'dni'} temu.`:'Nie masz jeszcze kopii swoich treningów.';
- return `<div class="backup-banner"><div><b>✉ Kopia kroniki</b><p>${when} Dane są tylko na tym telefonie.${standalone?'':' Dodaj aplikację do ekranu początkowego (Udostępnij → Do ekranu początkowego), aby Safari ich nie usunęło.'}</p></div><div class="backup-actions"><button class="secondary" id="bannerBackup">Pobierz kopię</button><button class="link-btn" id="bannerSnooze">Później</button></div></div>`;
-}
-function bindBanner(){
- $('#bannerBackup')?.addEventListener('click',exportBackup);
- $('#bannerSnooze')?.addEventListener('click',()=>{data.backupSnooze=new Date().toISOString();save()});
-}
-
-/* ---- Sekcje Kroniki ---- */
 function sealsPanel(){
  const earned=SEALS.filter(s=>data.seals?.[s.id]);
- return `<div class="panel"><div class="between"><h3 class="mini-title" style="margin:0">Pieczęcie</h3><span class="pill">${earned.length} / ${SEALS.length}</span></div><div class="seal-grid">${SEALS.map(s=>{const e=!!data.seals?.[s.id];return `<button class="seal-item" data-seal="${s.id}">${sealHtml(s,e)}<small>${esc(s.name)}</small></button>`}).join('')}</div></div>`;
+ return `<div class="panel"><div class="between"><h3 class="mini-title" style="margin:0">Odznaki Wędrowca</h3><span class="pill">${earned.length} / ${SEALS.length}</span></div><div class="seal-grid">${SEALS.map(s=>{const e=!!data.seals?.[s.id];return `<button class="seal-item" data-seal="${s.id}">${sealHtml(s,e)}<small>${esc(s.name)}</small></button>`}).join('')}</div></div>`;
 }
 function journalPanel(){
  const all=journalEntries().reverse();if(!all.length)return '';
@@ -340,119 +198,77 @@ function journalPanel(){
 }
 function sealSheet(id){
  const s=SEALS.find(x=>x.id===id),e=data.seals?.[id];if(!s)return;
- sheet(`<div class="seal-sheet">${sealHtml(s,!!e,true)}<small class="eyebrow">${e?'PIECZĘĆ ZDOBYTA · '+new Date(e).toLocaleDateString('pl-PL'):'PIECZĘĆ DO ZDOBYCIA'}</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p></div>`);
+ sheet(`<div class="seal-sheet">${sealHtml(s,!!e,true)}<small class="eyebrow">${e?'ODZNAKA ZDOBYTA · '+new Date(e).toLocaleDateString('pl-PL'):'ODZNAKA DO ZDOBYCIA'}</small><h2>${esc(s.name)}</h2><p>${esc(s.desc)}</p></div>`);
 }
 
-function render(){document.body.classList.toggle('view-map',view==='map');let labels={map:'Droga Pierścienia',training:'Dziennik treningów',chronicle:'Kronika podróży',growth:'Twoja kondycja'};$('#pageTitle').textContent=labels[view];$('#eyebrow').textContent=view==='map'?'WYPRAWA I • DROGA FRODA':'ŚRÓDZIEMIE • WYPRAWA I';$('#screen').innerHTML={map:renderMap,training:renderTraining,chronicle:renderChronicle,growth:renderGrowth}[view]();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#newWorkout')?.addEventListener('click',()=>workoutSheet());if(view==='map'){attachMap();bindChapterSwipe()} document.querySelectorAll('[data-view-jump]').forEach(b=>b.onclick=()=>setView(b.dataset.viewJump));bindBanner();$('#journalToggle')?.addEventListener('click',()=>{journalAll=!journalAll;render()})}
-function attachMap(){mapZoom=1;mapPan={x:0,y:0};const art=$('#mapArt'),stage=$('#mapStage');const clamp=()=>{const mx=stage.clientWidth*(mapZoom-1)/2,my=stage.clientHeight*(mapZoom-1)/2;mapPan={x:Math.max(-mx,Math.min(mx,mapPan.x)),y:Math.max(-my,Math.min(my,mapPan.y))}};const apply=()=>{clamp();art.style.transform=`translate(${mapPan.x}px,${mapPan.y}px) scale(${mapZoom})`};apply();stage.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{if(b.dataset.zoom==='reset'){mapZoom=1;mapPan={x:0,y:0}}else mapZoom=Math.max(1,Math.min(3.5,mapZoom+(b.dataset.zoom==='in'?.5:-.5)));apply()});let down=null;stage.onpointerdown=e=>{if(mapZoom===1||e.target.closest('button')||e.target.closest('[data-stop]'))return;down={x:e.clientX,y:e.clientY,px:mapPan.x,py:mapPan.y};stage.setPointerCapture(e.pointerId)};stage.onpointermove=e=>{if(!down)return;mapPan={x:down.px+e.clientX-down.x,y:down.py+e.clientY-down.y};apply()};stage.onpointerup=stage.onpointercancel=()=>down=null;stage.style.touchAction='pan-y';stage.querySelectorAll('[data-zoom]').forEach(b=>b.addEventListener('click',()=>{stage.style.touchAction=mapZoom>1?'none':'pan-y'}))}
 function segmentsHtml(rows){return rows.map((r,i)=>`<div class="two segment" style="grid-template-columns:1.1fr .8fr .9fr auto"><select aria-label="Rodzaj odcinka" data-seg="kind"><option ${r.kind==='Marsz'?'selected':''}>Marsz</option><option ${r.kind==='Bieg'?'selected':''}>Bieg</option><option ${r.kind==='Rozgrzewka'?'selected':''}>Rozgrzewka</option><option ${r.kind==='Schłodzenie'?'selected':''}>Schłodzenie</option></select><input aria-label="Minuty odcinka" type="number" min="0.1" step="0.1" data-seg="minutes" value="${r.minutes||''}" placeholder="min"><input aria-label="Prędkość km/h" type="number" min="0" step="0.1" data-seg="speed" value="${r.speed||''}" placeholder="km/h"><button class="link-btn" type="button" data-remove-seg="${i}" aria-label="Usuń odcinek">×</button></div>`).join('')}
-function workoutSheet(id=null){let old=data.workouts.find(w=>w.id===id)||{},detail=!!old.segments?.length,segments=(old.segments||[{kind:'Rozgrzewka',minutes:5,speed:5},{kind:'Bieg',minutes:2,speed:8},{kind:'Marsz',minutes:3,speed:5.5}]);function content(){sheet(`<h2>${id?'Edytuj trening':'Nowa aktywność'}</h2><form id="workoutForm"><div class="field"><label>Data</label><input required name="date" type="date" value="${esc(old.date||new Date().toLocaleDateString('sv-SE'))}" max="${new Date().toLocaleDateString('sv-SE')}"></div><div class="field"><label>Rodzaj aktywności</label><select name="type"><option ${old.type==='Marsz'?'selected':''}>Marsz</option><option ${old.type==='Bieg'?'selected':''}>Bieg</option><option ${old.type==='Interwały'?'selected':''}>Interwały</option></select></div><div class="segmented"><button type="button" data-place="treadmill" class="${old.place!=='outdoors'?'selected':''}">Bieżnia</button><button type="button" data-place="outdoors" class="${old.place==='outdoors'?'selected':''}">Teren</button></div><div class="two"><div class="field"><label>Dystans (km)</label><input name="km" required type="number" inputmode="decimal" min="0.01" step="0.01" value="${esc(old.km??'')}"></div><div class="field"><label>Czas (min, opcjonalnie)</label><input name="minutes" type="number" inputmode="decimal" min="0" step="0.1" value="${esc(old.minutes??'')}"></div></div><div class="segmented"><button type="button" data-detail="off" class="${!detail?'selected':''}">Szybki zapis</button><button type="button" data-detail="on" class="${detail?'selected':''}">Dokładne interwały</button></div><div id="details" ${detail?'':'hidden'}><div class="field"><label>Segmenty: rodzaj / czas min / km/h</label><div id="segments" style="display:grid;gap:7px">${segmentsHtml(segments)}</div><button type="button" class="secondary" id="addSegment">+ Dodaj odcinek</button></div><p class="note">Segmenty pomagają analizować trening. Podstawą drogi jest wpisany dystans z bieżni, bez automatycznego wyliczania.</p></div><div class="two"><div class="field"><label>Najdłuższy ciągły bieg (min)</label><input name="longestRun" type="number" min="0" step="0.1" value="${esc(old.longestRun??'')}"></div><div class="field"><label>Wysiłek (1–10)</label><input name="rpe" type="number" min="1" max="10" step="1" value="${esc(old.rpe??'')}"></div></div><div class="two"><div class="field"><label>Łączny czas biegu (min)</label><input name="runMinutes" type="number" min="0" step="0.1" value="${esc(old.runMinutes??'')}"></div><div class="field"><label>Nachylenie bieżni (%)</label><input name="incline" type="number" min="0" step="0.5" value="${esc(old.incline??'')}"></div></div><div class="field"><label>Notatka</label><textarea name="notes" rows="2">${esc(old.notes??'')}</textarea></div><label class="tiny"><input type="checkbox" name="test" ${old.test?'checked':''}> To próba porównawcza</label><div class="sheet-actions"><button type="submit" class="primary">Zapisz trening</button>${id?'<button type="button" class="secondary danger" id="deleteWorkout">Usuń</button>':''}</div></form>`);let place=old.place||'treadmill';$('#sheet').querySelectorAll('[data-place]').forEach(btn=>btn.onclick=()=>{place=btn.dataset.place;$('#sheet').querySelectorAll('[data-place]').forEach(x=>x.classList.toggle('selected',x===btn))});$('#sheet').querySelectorAll('[data-detail]').forEach(btn=>btn.onclick=()=>{detail=btn.dataset.detail==='on';$('#details').hidden=!detail;$('#sheet').querySelectorAll('[data-detail]').forEach(x=>x.classList.toggle('selected',x===btn))});function collectSegments(){return [...$('#segments').querySelectorAll('.segment')].map(el=>({kind:el.querySelector('[data-seg="kind"]').value,minutes:+el.querySelector('[data-seg="minutes"]').value,speed:+el.querySelector('[data-seg="speed"]').value})).filter(x=>x.minutes>0)}$('#addSegment').onclick=()=>{segments=collectSegments();segments.push({kind:'Marsz',minutes:3,speed:5});$('#segments').innerHTML=segmentsHtml(segments);bindRemove()};function bindRemove(){$('#segments').querySelectorAll('[data-remove-seg]').forEach(b=>b.onclick=()=>{segments=collectSegments();segments.splice(+b.dataset.removeSeg,1);$('#segments').innerHTML=segmentsHtml(segments);bindRemove()})}bindRemove();$('#workoutForm').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),w={id:id||crypto.randomUUID(),date:String(fd.get('date')),type:String(fd.get('type')),place,km:+fd.get('km'),minutes:fd.get('minutes')===''?null:+fd.get('minutes'),longestRun:fd.get('longestRun')===''?null:+fd.get('longestRun'),rpe:fd.get('rpe')===''?null:+fd.get('rpe'),runMinutes:fd.get('runMinutes')===''?null:+fd.get('runMinutes'),incline:fd.get('incline')===''?null:+fd.get('incline'),notes:String(fd.get('notes')),test:fd.has('test'),segments:detail?collectSegments():[]};if(!Number.isFinite(w.km)||w.km<=0||w.date>new Date().toLocaleDateString('sv-SE'))return toast('Sprawdź dystans i datę');const before=travel();if(id)data.workouts=data.workouts.map(t=>t.id===id?w:t);else data.workouts.push(w);localStorage.setItem(KEY,JSON.stringify(data));closeSheet();toast(`Zapisano ${fmt(w.km)} km. Szlak wydłużył się o ${fmt(w.km*SCALE)} km.`);celebrate(before)};if(id)$('#deleteWorkout').onclick=()=>{if(confirm('Usunąć ten trening? Pozycja na mapie zostanie przeliczona.')){data.workouts=data.workouts.filter(w=>w.id!==id);save();closeSheet();toast('Trening usunięty')}}}content()}
-function settings(){sheet(`<h2>Ustawienia i dane</h2><div class="panel"><p class="eyebrow">POSTĘP PODRÓŻY</p><div class="between"><b>Przelicznik</b><span>1 : 3</span></div><p class="note">${fmt(real())} km Twojej drogi zasiliło dotąd ${fmt(travel())} km szlaku.</p></div><div class="panel"><h3 class="mini-title">Kopia zapasowa</h3><p class="note">Dane znajdują się wyłącznie na tym urządzeniu. Regularnie pobieraj kopię JSON i zapisuj ją w Plikach lub iCloud Drive.</p><p class="note">${data.lastBackup?"Ostatnia kopia: "+new Date(data.lastBackup).toLocaleDateString("pl-PL"):"Nie pobrano jeszcze żadnej kopii."}</p><button class="primary" id="exportData">Pobierz kopię JSON</button><button class="secondary" id="importData" style="width:100%;margin-top:9px">Wczytaj kopię JSON</button></div><p class="note">Wersja 2.3</p>`);$('#exportData').onclick=exportBackup;$('#importData').onclick=()=>$('#importFile').click()}
-$('#importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{let j=JSON.parse(await file.text());if(!Array.isArray(j.workouts)||j.workouts.some(w=>!(w.id&&/^\d{4}-\d\d-\d\d$/.test(w.date)&&Number.isFinite(+w.km)&&+w.km>0)))throw Error('Zły format danych');if(confirm(`Wczytać ${j.workouts.length} treningów? Obecne dane zostaną zastąpione.`)){data={schema:1,created:j.created||new Date().toISOString(),workouts:j.workouts,seals:j.seals,lastBackup:j.lastBackup};syncSeals(true);save();closeSheet();toast('Kopia została przywrócona')}}catch(err){toast('Nieprawidłowy plik kopii: '+err.message)}e.target.value=''});
-$('#settingsBtn').onclick=settings;document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));$('#screen').addEventListener('click',e=>{const b=e.target.closest('[data-edit],[data-stop],[data-seal]');if(b?.dataset.seal)sealSheet(b.dataset.seal);else if(b?.dataset.edit)workoutSheet(b.dataset.edit);else if(b?.dataset.stop!==undefined)goToStop(+b.dataset.stop)});$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});syncSeals(true);try{render()}catch(error){console.error('Błąd ekranu Śródziemia',error);const target=document.querySelector('#screen');if(target){target.innerHTML='<section class="app-error"><h2>Nie udało się otworzyć kroniki</h2><p>Wystąpił problem podczas wyświetlania wyprawy. Twoje treningi nie zostały usunięte.</p><pre id="errorInfo"></pre><button id="retryRender" class="primary">Spróbuj ponownie</button></section>';target.querySelector('#errorInfo').textContent=String(error&&error.message||error);target.querySelector('#retryRender').onclick=()=>location.reload();}}if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+function workoutSheet(id=null){let old=data.workouts.find(w=>w.id===id)||{},detail=!!old.segments?.length,segments=(old.segments||[{kind:'Rozgrzewka',minutes:5,speed:5},{kind:'Bieg',minutes:2,speed:8},{kind:'Marsz',minutes:3,speed:5.5}]);function content(){sheet(`<h2>${id?'Edytuj trening':'Nowa aktywność'}</h2><form id="workoutForm"><div class="field"><label>Data</label><input required name="date" type="date" value="${esc(old.date||new Date().toLocaleDateString('sv-SE'))}" max="${new Date().toLocaleDateString('sv-SE')}"></div><div class="field"><label>Rodzaj aktywności</label><select name="type"><option ${old.type==='Marsz'?'selected':''}>Marsz</option><option ${old.type==='Bieg'?'selected':''}>Bieg</option><option ${old.type==='Interwały'?'selected':''}>Interwały</option></select></div><div class="segmented"><button type="button" data-place="treadmill" class="${old.place!=='outdoors'?'selected':''}">Bieżnia</button><button type="button" data-place="outdoors" class="${old.place==='outdoors'?'selected':''}">Teren</button></div><div class="two"><div class="field"><label>Dystans (km)</label><input name="km" required type="number" inputmode="decimal" min="0.01" step="0.01" value="${esc(old.km??'')}"></div><div class="field"><label>Czas (min, opcjonalnie)</label><input name="minutes" type="number" inputmode="decimal" min="0" step="0.1" value="${esc(old.minutes??'')}"></div></div><div class="segmented"><button type="button" data-detail="off" class="${!detail?'selected':''}">Szybki zapis</button><button type="button" data-detail="on" class="${detail?'selected':''}">Dokładne interwały</button></div><div id="details" ${detail?'':'hidden'}><div class="field"><label>Segmenty: rodzaj / czas min / km/h</label><div id="segments" style="display:grid;gap:7px">${segmentsHtml(segments)}</div><button type="button" class="secondary" id="addSegment">+ Dodaj odcinek</button></div><p class="note">Segmenty pomagają analizować trening. Podstawą drogi jest wpisany dystans z bieżni, bez automatycznego wyliczania.</p></div><div class="two"><div class="field"><label>Najdłuższy ciągły bieg (min)</label><input name="longestRun" type="number" min="0" step="0.1" value="${esc(old.longestRun??'')}"></div><div class="field"><label>Wysiłek (1–10)</label><input name="rpe" type="number" min="1" max="10" step="1" value="${esc(old.rpe??'')}"></div></div><div class="two"><div class="field"><label>Łączny czas biegu (min)</label><input name="runMinutes" type="number" min="0" step="0.1" value="${esc(old.runMinutes??'')}"></div><div class="field"><label>Nachylenie bieżni (%)</label><input name="incline" type="number" min="0" step="0.5" value="${esc(old.incline??'')}"></div></div><div class="field"><label>Notatka</label><textarea name="notes" rows="2">${esc(old.notes??'')}</textarea></div><label class="tiny"><input type="checkbox" name="test" ${old.test?'checked':''}> To próba porównawcza</label><div class="sheet-actions"><button type="submit" class="primary">Zapisz trening</button>${id?'<button type="button" class="secondary danger" id="deleteWorkout">Usuń</button>':''}</div></form>`);let place=old.place||'treadmill';$('#sheet').querySelectorAll('[data-place]').forEach(btn=>btn.onclick=()=>{place=btn.dataset.place;$('#sheet').querySelectorAll('[data-place]').forEach(x=>x.classList.toggle('selected',x===btn))});$('#sheet').querySelectorAll('[data-detail]').forEach(btn=>btn.onclick=()=>{detail=btn.dataset.detail==='on';$('#details').hidden=!detail;$('#sheet').querySelectorAll('[data-detail]').forEach(x=>x.classList.toggle('selected',x===btn))});function collectSegments(){return [...$('#segments').querySelectorAll('.segment')].map(el=>({kind:el.querySelector('[data-seg="kind"]').value,minutes:+el.querySelector('[data-seg="minutes"]').value,speed:+el.querySelector('[data-seg="speed"]').value})).filter(x=>x.minutes>0)}$('#addSegment').onclick=()=>{segments=collectSegments();segments.push({kind:'Marsz',minutes:3,speed:5});$('#segments').innerHTML=segmentsHtml(segments);bindRemove()};function bindRemove(){$('#segments').querySelectorAll('[data-remove-seg]').forEach(b=>b.onclick=()=>{segments=collectSegments();segments.splice(+b.dataset.removeSeg,1);$('#segments').innerHTML=segmentsHtml(segments);bindRemove()})}bindRemove();$('#workoutForm').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target),w={...old,id:id||crypto.randomUUID(),date:String(fd.get('date')),type:String(fd.get('type')),place,km:+fd.get('km'),minutes:fd.get('minutes')===''?null:+fd.get('minutes'),longestRun:fd.get('longestRun')===''?null:+fd.get('longestRun'),rpe:fd.get('rpe')===''?null:+fd.get('rpe'),runMinutes:fd.get('runMinutes')===''?null:+fd.get('runMinutes'),incline:fd.get('incline')===''?null:+fd.get('incline'),notes:String(fd.get('notes')),test:fd.has('test'),segments:detail?collectSegments():[]};if(!Number.isFinite(w.km)||w.km<=0||w.date>new Date().toLocaleDateString('sv-SE'))return toast('Sprawdź dystans i datę');const before=travel();if(id)data.workouts=data.workouts.map(t=>t.id===id?w:t);else data.workouts.push(w);localStorage.setItem(KEY,JSON.stringify(data));closeSheet();toast(`Zapisano ${fmt(w.km)} km. Szlak wydłużył się o ${fmt(w.km*SCALE)} km.`);celebrate(before)};if(id)$('#deleteWorkout').onclick=()=>{if(confirm('Usunąć ten trening? Pozycja na mapie zostanie przeliczona.')){data.workouts=data.workouts.filter(w=>w.id!==id);save();closeSheet();toast('Trening usunięty')}}}content()}
+function settings(){sheet(`<h2>Ustawienia i dane</h2><div class="panel"><p class="eyebrow">POSTĘP PODRÓŻY</p><div class="between"><b>Przelicznik</b><span>1 : 3</span></div><p class="note">${fmt(real())} km Twojej drogi zasiliło dotąd ${fmt(travel())} km szlaku.</p></div><div class="panel"><h3 class="mini-title">Kopia zapasowa</h3><p class="note">Dane znajdują się wyłącznie na tym urządzeniu. Regularnie pobieraj kopię JSON i zapisuj ją w Plikach lub iCloud Drive.</p><p class="note">${data.lastBackup?"Ostatnia kopia: "+new Date(data.lastBackup).toLocaleDateString("pl-PL"):"Nie pobrano jeszcze żadnej kopii."}</p><button class="primary" id="exportData">Pobierz kopię JSON</button><button class="secondary" id="importData" style="width:100%;margin-top:9px">Wczytaj kopię JSON</button></div><p class="note">Wersja 5.5</p>`);$('#exportData').onclick=exportBackup;$('#importData').onclick=()=>$('#importFile').click()}
+$('#importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{let j=JSON.parse(await file.text());if(!Array.isArray(j.workouts)||j.workouts.some(w=>!(w.id&&/^\d{4}-\d\d-\d\d$/.test(w.date)&&Number.isFinite(+w.km)&&+w.km>0)))throw Error('Zły format danych');if(confirm(`Wczytać ${j.workouts.length} treningów? Obecne dane zostaną zastąpione.`)){data={...j,schema:j.schema||1,created:j.created||new Date().toISOString(),workouts:j.workouts};syncSeals(true);save();closeSheet();toast('Kopia została przywrócona')}}catch(err){toast('Nieprawidłowy plik kopii: '+err.message)}e.target.value=''});
 
-
-/* ===== v5.1 overrides ===== */
-function renderMap(){
- const distance=mapK(),currentChapter=chapterByDistance(Math.min(distance,TOTAL-.01)).id;
- const chapter=Math.max(1,Math.min(currentChapter,selectedChapter||currentChapter));
- const meta=CHAPTERS[chapter-1],roman=['I','II','III','IV'][chapter-1];
- const unlocked=discovered().filter(s=>s.km>meta.start&&s.km<=meta.goal);
- const count=stops.filter(s=>s.km>meta.start&&s.km<=meta.goal).length;
- const capped=Math.min(Math.max(0,distance-meta.start),meta.goal-meta.start);
- const lastWorkout=[...data.workouts].sort((a,b)=>b.date.localeCompare(a.date))[0];
- const lastStop=[...discovered()].reverse()[0];
- const seals=(data.seals&&Array.isArray(data.seals)?data.seals:[]);
- const latestSeal=seals[seals.length-1];
- return `<section class="map-shell"><div class="map-stage" id="mapStage" aria-label="Mapa rozdziału ${roman}; przesuń palcem poziomo, aby zmienić rozdział"><div class="map-copy"><small class="eyebrow">ROZDZIAŁ ${roman} · ${fmt(meta.start)}–${fmt(meta.goal)} KM SZLAKU</small><h2>${esc(meta.title)}</h2><p>${esc(meta.intro)}</p></div><div class="map-art" id="mapArt"><img class="map-landscape chapter-portrait-image" src="${MAP_IMAGES[chapter]}" alt="${MAP_ALTS[chapter]}" draggable="false"></div><div class="map-tools"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div><div class="map-bottom-hud"><span class="hud-pill main-km">${fmt(capped)} / ${fmt(meta.goal-meta.start)} km</span><span class="map-discover-count">${unlocked.length} z ${count} odkrytych miejsc</span></div></div><div class="chapter-track" aria-hidden="true">${CHAPTERS.map(c=>`<i class="${c.id===chapter?'on':''} ${c.id>currentChapter?'future':''}"></i>`).join('')}</div><div class="map-lower"><small class="eyebrow">ZAPISKI Z WYPRAWY</small><h2>Ślady na szlaku</h2><div class="journey-feed"><button class="journey-feed-item" data-view-jump="training"><span class="feed-icon">↗</span><span><small>OSTATNI TRENING</small><strong>${lastWorkout?esc(lastWorkout.type):'Rozpocznij wędrówkę'}</strong><span>${lastWorkout?`${esc(lastWorkout.date)} · ${fmt(lastWorkout.km)} km${lastWorkout.minutes?' · '+fmt(lastWorkout.minutes)+' min':''}`:'Dodaj swój pierwszy trening'}</span></span><span class="feed-arr">›</span></button><button class="journey-feed-item" data-view-jump="chronicle"><span class="feed-icon">⌖</span><span><small>ODWIEDZONA LOKACJA</small><strong>${lastStop?esc(lastStop.name):'Przed Tobą pierwsze odkrycie'}</strong><span>${lastStop?fmt(lastStop.km)+' km szlaku':'Odkrywaj miejsca wraz z postępem'}</span></span><span class="feed-arr">›</span></button><button class="journey-feed-item" data-view-jump="growth"><span class="feed-icon">✧</span><span><small>ODZNAKI WĘDROWCA</small><strong>${seals.length?seals.length+' zdobytych odznak':'Pierwsza odznaka przed Tobą'}</strong><span>${seals.length?'Zobacz swoje osiągnięcia':'Kolejne kamienie milowe czekają'}</span></span><span class="feed-arr">›</span></button></div></div></section>`;
-}
+/* ---- Ekrany aplikacji ---- */
 
 function renderTraining(){
  let ws=[...data.workouts].sort((a,b)=>b.date.localeCompare(a.date));
  const hours=ws.reduce((s,w)=>s+(+w.minutes||0),0)/60;
- return `<div class="page"><section class="section-block"><div class="section-header"><small class="eyebrow">TWOJA AKTYWNOŚĆ</small><h2>Każdy krok ma znaczenie</h2><p class="section-lead">Zapisuj treningi i buduj postęp na szlaku.</p></div><div class="tag-row"><span class="pill">${ws.length} treningów</span><span class="pill">${fmt(real())} km</span><span class="pill">${fmt(hours)} h</span></div><div class="cta-stack"><button class="primary" id="newWorkout">+ Zapisz trening</button><button class="secondary" id="importWorkout">Importuj zrzut Mi Fitness</button></div></section><section class="section-block"><small class="eyebrow">HISTORIA AKTYWNOŚCI</small><h3 class="soft-title" style="font-size:46px;margin:6px 0 10px">Ostatnie wpisy</h3><div class="training-list">${ws.length?ws.map(w=>`<article class="entry"><div class="entry-head"><div><div class="entry-title">${esc(w.type)}</div><div class="entry-meta">${esc(w.date)} · ${w.place==='treadmill'?'Bieżnia':'Teren'}${w.minutes?' · '+fmt(w.minutes)+' min':''}${w.runMinutes?' · bieg '+fmt(w.runMinutes)+' min':''}${w.heartRate?' · ❤ '+fmt(w.heartRate)+' bpm':''}</div></div><div class="entry-title" style="font-size:40px">${fmt(w.km)} km</div></div><div class="entry-actions"><button class="secondary" data-edit="${esc(w.id)}">Edytuj</button></div></article>`).join(''):'<div class="empty">Jeszcze nie ma treningów. Dodaj pierwszy wpis, aby rozpocząć podróż.</div>'}</div></section></div>`;
+ return `<div class="page"><section class="section-block"><div class="section-header"><small class="eyebrow">TWOJA AKTYWNOŚĆ</small><h2>Każdy krok ma znaczenie</h2><p class="section-lead">Zapisuj treningi i buduj postęp na szlaku.</p></div><div class="tag-row"><span class="pill">${ws.length} treningów</span><span class="pill">${fmt(real())} km</span><span class="pill">${fmt(hours)} h</span></div><div class="cta-stack"><button class="primary" id="newWorkout">+ Zapisz trening</button><button class="secondary" id="importBackup">Importuj kopię JSON</button></div></section><section class="section-block"><small class="eyebrow">HISTORIA AKTYWNOŚCI</small><h3 class="soft-title" style="font-size:46px;margin:6px 0 10px">Ostatnie wpisy</h3><div class="training-list">${ws.length?ws.map(w=>`<article class="entry"><div class="entry-head"><div><div class="entry-title">${esc(w.type)}</div><div class="entry-meta">${esc(w.date)} · ${w.place==='treadmill'?'Bieżnia':'Teren'}${w.minutes?' · '+fmt(w.minutes)+' min':''}${w.runMinutes?' · bieg '+fmt(w.runMinutes)+' min':''}${w.heartRate?' · ❤ '+fmt(w.heartRate)+' bpm':''}</div></div><div class="entry-title" style="font-size:40px">${fmt(w.km)} km</div></div><div class="entry-actions"><button class="secondary" data-edit="${esc(w.id)}">Edytuj</button></div></article>`).join(''):'<div class="empty">Jeszcze nie ma treningów. Dodaj pierwszy wpis, aby rozpocząć podróż.</div>'}</div></section></div>`;
 }
 
 function renderChronicle(){
  const done=discovered().slice().reverse();
  const future=stops.filter(s=>s.km>travel());
  const nextStops=future.slice(0,4);
- return `<div class="page"><section class="section-block"><div class="section-header"><small class="eyebrow">KRONIKA PODRÓŻY</small><h2>Odkryte miejsca</h2><p class="section-lead">Kolejne etapy wyprawy odsłaniają się wraz z każdym zapisanym treningiem.</p></div><div class="tag-row"><span class="pill">${done.length} / ${stops.length} odkryć</span><span class="pill">${fmt(travel())} km szlaku</span></div></section><section class="section-block chronicle-list">${done.length?done.map(s=>`<button class="discover discover-rich" data-stop="${stops.indexOf(s)}" style="width:100%;text-align:left;color:inherit"><img src="${stopArt(s)}" alt="${esc(s.name)}"><div><small class="eyebrow">${s.kind==='major'?'KAMIEŃ MILOWY':'ODKRYCIE'} · ${fmt(s.km)} KM SZLAKU</small><h3 class="soft-title" style="font-size:34px;margin:4px 0 6px">${esc(s.name)}</h3><div class="note">${esc(s.desc)}</div></div></button>`).join(''):'<div class="empty">Pierwsze miejsca pojawią się tutaj po rozpoczęciu treningów.</div>'}</section><section class="section-block">${nextStops.length?`<small class="eyebrow">PRZED TOBĄ</small><h3 class="soft-title" style="font-size:40px;margin:6px 0 10px">Najbliższe odkrycia</h3>${nextStops.map(s=>`<div class="list-row"><div><strong>${esc(s.name)}</strong><small>Za ${fmt((s.km-travel())/SCALE)} km Twojej drogi</small></div></div>`).join('')}`:''}</section></div>`;
+ return `<div class="page"><section class="section-block"><div class="section-header"><small class="eyebrow">KRONIKA PODRÓŻY</small><h2>Odkryte miejsca</h2><p class="section-lead">Kolejne etapy wyprawy odsłaniają się wraz z każdym zapisanym treningiem.</p></div><div class="tag-row"><span class="pill">${done.length} / ${stops.length} odkryć</span><span class="pill">${fmt(travel())} km szlaku</span></div></section><section class="section-block">${journalPanel()}</section><section class="section-block chronicle-list">${done.length?done.map(s=>`<button class="discover discover-rich" data-stop="${stops.indexOf(s)}" style="width:100%;text-align:left;color:inherit"><img src="${stopArt(s)}" alt="${esc(s.name)}"><div><small class="eyebrow">${s.kind==='major'?'KAMIEŃ MILOWY':'ODKRYCIE'} · ${fmt(s.km)} KM SZLAKU</small><h3 class="soft-title" style="font-size:34px;margin:4px 0 6px">${esc(s.name)}</h3><div class="note">${esc(s.desc)}</div></div></button>`).join(''):'<div class="empty">Pierwsze miejsca pojawią się tutaj po rozpoczęciu treningów.</div>'}</section><section class="section-block">${nextStops.length?`<small class="eyebrow">PRZED TOBĄ</small><h3 class="soft-title" style="font-size:40px;margin:6px 0 10px">Najbliższe odkrycia</h3>${nextStops.map(s=>`<div class="list-row"><div><strong>${esc(s.name)}</strong><small>Za ${fmt((s.km-travel())/SCALE)} km Twojej drogi</small></div></div>`).join('')}`:''}</section></div>`;
 }
 
 function renderGrowth(){
  let ws=data.workouts,minutes=ws.reduce((s,w)=>s+(+w.minutes||0),0),best=Math.max(0,...ws.filter(w=>w.type==='Bieg').map(w=>+w.km)),maxRun=Math.max(0,...ws.map(w=>+(w.longestRun||0))),withPace=ws.filter(w=>w.minutes>0&&w.km>0),totalPace=withPace.reduce((s,w)=>s+w.minutes,0)/Math.max(.01,withPace.reduce((s,w)=>s+w.km,0));
- return `<div class="page"><section class="section-block"><div class="section-header"><small class="eyebrow">TWOJA DROGA</small><h2>Postęp Wędrowca</h2><p class="section-lead">Kilometry, regularność i kolejne osobiste rekordy.</p></div><div class="summary-strip"><div class="item"><span class="value">${fmt(real())}</span><span class="label">Przebyte km</span></div><div class="item"><span class="value">${fmt(minutes/60)}</span><span class="label">Godziny</span></div><div class="item"><span class="value">${weeklyStreak()}</span><span class="label">Seria tygodni</span></div></div></section><section class="section-block"><small class="eyebrow">POSTĘP</small><h3 class="soft-title" style="font-size:42px;margin:6px 0 10px">Ostatnie 8 tygodni</h3><div class="chart-wrap">${barsChart()}</div></section><section class="section-block"><div class="mini-grid"><div class="stat"><b>${fmt(best)}</b><span>Najdłuższy bieg (km)</span></div><div class="stat"><b>${fmt(maxRun)}</b><span>Najdłuższy bieg ciągły (min)</span></div><div class="stat"><b>${withPace.length?fmt(totalPace):'—'}</b><span>Średnie tempo min/km</span></div></div></section></div>`;
+ return `<div class="page"><section class="section-block"><div class="section-header"><small class="eyebrow">TWOJA DROGA</small><h2>Postęp Wędrowca</h2><p class="section-lead">Kilometry, regularność i kolejne osobiste rekordy.</p></div><div class="summary-strip"><div class="item"><span class="value">${fmt(real())}</span><span class="label">Przebyte km</span></div><div class="item"><span class="value">${fmt(minutes/60)}</span><span class="label">Godziny</span></div><div class="item"><span class="value">${weeklyStreak()}</span><span class="label">Seria tygodni</span></div></div></section><section class="section-block"><small class="eyebrow">POSTĘP</small><h3 class="soft-title" style="font-size:42px;margin:6px 0 10px">Ostatnie 8 tygodni</h3><div class="chart-wrap">${barsChart()}</div></section><section class="section-block"><div class="mini-grid"><div class="stat"><b>${fmt(best)}</b><span>Najdłuższy bieg (km)</span></div><div class="stat"><b>${fmt(maxRun)}</b><span>Najdłuższy bieg ciągły (min)</span></div><div class="stat"><b>${withPace.length?fmt(totalPace):'—'}</b><span>Średnie tempo min/km</span></div></div></section><section class="section-block">${sealsPanel()}</section></div>`;
 }
 
-function bindBanner(){}
-
-document.addEventListener('click',function(e){
- const btn=e.target.closest('#importWorkout');
- if(btn) document.getElementById('importFile')?.click();
-});
-
-/* v5.2 — navigation via horizontal touch gesture, without additional arrows */
-function bindChapterSwipe(){
- const stage=document.getElementById('mapStage');if(!stage)return;
- let start=null;
- stage.addEventListener('touchstart',e=>{if(e.touches.length!==1||mapZoom>1){start=null;return}const t=e.touches[0];start={x:t.clientX,y:t.clientY}}, {passive:true});
- stage.addEventListener('touchend',e=>{if(!start||mapZoom>1)return;const t=e.changedTouches[0];const dx=t.clientX-start.x,dy=t.clientY-start.y;start=null;
-   if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.35)return;
-   const current=chapterByDistance(Math.min(mapK(),TOTAL-.01)).id;
-   const n=Math.max(1,Math.min(current,(selectedChapter||current)+(dx<0?1:-1)));
-   if(n!==(selectedChapter||current)){selectedChapter=n;mapZoom=1;mapPan={x:0,y:0};render();}
- },{passive:true});
-}
-
-
-/* ===== v5.4 overrides: cleaner map UI, progress overlay, travel animation ===== */
-const CHAPTER_VISUALS={
-  1:[
-    {km:0,name:'Hobbiton',x:15,y:84},
-    {km:105,name:'Stary Las',x:29,y:72},
-    {km:215,name:'Bree',x:47,y:58},
-    {km:345,name:'Komarowe Bagna',x:42,y:45},
-    {km:450,name:'Wichrowy Czub',x:74,y:39},
-    {km:615,name:'Bród Bruinen',x:84,y:30},
-    {km:737,name:'Rivendell',x:96,y:15}
-  ],
-  2:[
-    {km:737,name:'Rivendell',x:14,y:10},
-    {km:940,name:'Hollin',x:30,y:31},
-    {km:1090,name:'Caradhras',x:53,y:49},
-    {km:1230,name:'Moria',x:56,y:68},
-    {km:1481,name:'Lothlórien',x:30,y:92}
-  ],
-  3:[
-    {km:1481,name:'Lothlórien',x:10,y:19},
-    {km:1710,name:'Anduina',x:35,y:41},
-    {km:1940,name:'Argonath',x:51,y:60},
-    {km:2107,name:'Rauros',x:88,y:82}
-  ],
-  4:[
-    {km:2107,name:'Rauros',x:4,y:9},
-    {km:2280,name:'Emyn Muil',x:17,y:29},
-    {km:2410,name:'Martwe Bagna',x:17,y:47},
-    {km:2540,name:'Ithilien',x:17,y:64},
-    {km:2680,name:'Cirith Ungol',x:29,y:80},
-    {km:2790,name:'Gorgoroth',x:61,y:92},
-    {km:2863,name:'Góra Przeznaczenia',x:85,y:75}
-  ]
+/* ---- Mapa i postęp na ilustrowanym szlaku ---- */
+// Coordinates use the native 344 × 660 artwork. Intermediate points follow
+// the painted trail; only the existing named stops become interactive buttons.
+const CHAPTER_PATHS={
+ 1:[[[62,525],[83,521],[103,509],[120,491],[133,464],[140,436],[143,420]],
+    [[143,420],[150,398],[170,376],[197,356]],
+    [[197,356],[193,343],[194,330]],
+    [[194,330],[201,310],[217,290],[241,274],[258,257]],
+    [[258,257],[270,238],[282,213],[293,192]],
+    [[293,192],[306,175],[317,153],[323,116]]],
+ 2:[[[89,84],[102,102],[124,115],[136,132],[137,147],[131,168],[134,193]],
+    [[134,193],[136,211],[147,231],[174,242],[197,258],[204,274],[204,286]],
+    [[204,286],[210,305],[233,320],[242,337],[239,352],[242,367]],
+    [[242,367],[236,394],[225,420],[222,444],[214,462],[199,475],[180,489],[170,507],[167,520]]],
+ 3:[[[36,105],[35,132],[43,151],[66,164],[84,176],[89,197],[107,220]],
+    [[107,220],[119,250],[126,273],[148,281],[169,290],[179,308],[180,336],[180,368]],
+    [[180,368],[185,392],[200,419],[207,446],[208,464],[229,480],[243,489],[252,508],[272,512]]],
+ 4:[[[11,99],[36,111],[54,125],[59,145],[55,174]],
+    [[55,174],[60,197],[77,219],[80,241],[76,264]],
+    [[76,264],[81,287],[76,307],[65,325],[64,345]],
+    [[64,345],[76,367],[86,386],[101,404],[105,420]],
+    [[105,420],[114,446],[126,472],[139,491],[161,509],[183,519],[205,525]],
+    [[205,525],[227,520],[248,503],[270,485],[293,471]]]
 };
 let recentUnlockNames=[];
-function chapterVisualStops(ch){return CHAPTER_VISUALS[ch]||[]}
+function chapterVisualStops(ch){
+ const meta=CHAPTERS[ch-1],chapterStops=stops.filter(s=>s.km>=meta.start&&s.km<=meta.goal);
+ const paths=CHAPTER_PATHS[ch];
+ return chapterStops.map((s,i)=>{const [x,y]=i===0?paths[0][0]:paths[i-1].at(-1);return {...s,x:x/344*100,y:y/660*100}});
+}
 function pointAtKm(ch,km){
-  const pts=chapterVisualStops(ch);if(!pts.length)return {x:50,y:50,name:''};
-  if(km<=pts[0].km)return pts[0];
-  for(let i=0;i<pts.length-1;i++){
-    const a=pts[i],b=pts[i+1];
-    if(km<=b.km){
-      const span=Math.max(1,b.km-a.km),p=Math.max(0,Math.min(1,(km-a.km)/span));
-      return {x:a.x+(b.x-a.x)*p,y:a.y+(b.y-a.y)*p,name:b.name};
-    }
+ const pts=chapterVisualStops(ch);
+ if(km<=pts[0].km)return pts[0];
+ for(let i=0;i<pts.length-1;i++){
+  const a=pts[i],b=pts[i+1];if(km>b.km)continue;
+  const path=CHAPTER_PATHS[ch][i],lengths=path.slice(1).map((p,j)=>Math.hypot(p[0]-path[j][0],p[1]-path[j][1]));
+  let remaining=Math.max(0,(km-a.km)/(b.km-a.km))*lengths.reduce((sum,n)=>sum+n,0);
+  for(let j=0;j<lengths.length;j++){
+   if(remaining<=lengths[j]||j===lengths.length-1){const t=Math.min(1,remaining/lengths[j]);return{x:(path[j][0]+(path[j+1][0]-path[j][0])*t)/344*100,y:(path[j][1]+(path[j+1][1]-path[j][1])*t)/660*100}}
+   remaining-=lengths[j];
   }
-  return pts[pts.length-1];
+ }
+ return pts.at(-1);
 }
 function visibleKmForChapter(ch,distance,currentChapter){
   const meta=CHAPTERS[ch-1];
@@ -465,10 +281,10 @@ function mapProgressOverlay(ch,distance,currentChapter){
   const currentPoint=pointAtKm(ch,visibleKm);
   const nodes=pts.map((p,idx)=>{
     const state=p.km<visibleKm-0.01?'done':Math.abs(p.km-visibleKm)<0.6?'current':(p.km<=visibleKm+0.01?'done':'future');
-    const fresh=recentUnlockNames.includes(p.name)?' new':'';
+    const fresh=p.km<=visibleKm&&recentUnlockNames.includes(p.name)?' new':'';
     return `<button class="map-node ${state}${fresh}" data-stop-name="${esc(p.name)}" data-stop-km="${p.km}" aria-label="${esc(p.name)}" style="left:${p.x}%;top:${p.y}%"></button>`;
   }).join('');
-  return `<div class="map-progress-overlay" aria-hidden="true">${nodes}<div class="map-traveler ${animating?'is-moving':''}" style="left:${currentPoint.x}%;top:${currentPoint.y}%"><span></span></div></div>`;
+  return `<div class="map-progress-overlay">${nodes}<div aria-hidden="true" class="map-traveler ${animating?'is-moving':''}" style="left:${currentPoint.x}%;top:${currentPoint.y}%"><span></span></div></div>`;
 }
 function stopIndexByKm(km){return stops.findIndex(s=>Math.abs(s.km-km)<1e-9)}
 function openStopByVisual(km){const idx=stopIndexByKm(km);if(idx>=0)goToStop(idx)}
@@ -484,7 +300,7 @@ function renderMap(){
  const lastStop=[...discovered()].reverse()[0];
  const sealsCount=Object.keys(data.seals||{}).length;
  const swipeHint=currentChapter>1?'<div class="map-swipe-hint">Przesuń palcem w lewo lub w prawo, aby przeglądać odblokowane rozdziały.</div>':'';
- return `<section class="map-shell"><div class="map-stage" id="mapStage" aria-label="Mapa rozdziału ${roman}"><div class="map-copy"><small class="eyebrow">ROZDZIAŁ ${roman} · ${fmt(meta.start)}–${fmt(meta.goal)} KM SZLAKU</small><h2>${esc(meta.title)}</h2><p>${esc(meta.intro)}</p></div><div class="map-art" id="mapArt"><img class="map-landscape chapter-portrait-image" src="${MAP_IMAGES[chapter]}" alt="${MAP_ALTS[chapter]}" draggable="false">${mapProgressOverlay(chapter,distance,currentChapter)}</div><div class="map-tools"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div><div class="map-bottom-hud"><div class="map-bottom-row"><span class="hud-pill map-chapter-pill">ROZDZIAŁ ${roman}</span><span class="hud-pill main-km">${fmt(chapterDistance)} / ${fmt(meta.goal-meta.start)} km</span></div><span class="hud-pill discovery">${unlockedVisuals} z ${totalVisuals} odkrytych punktów</span></div></div><div class="chapter-track" aria-label="Postęp rozdziałów">${CHAPTERS.map(c=>`<button class="chapter-dot ${c.id===chapter?'on':''} ${c.id>currentChapter?'future':''}" data-chapter-select="${c.id}" ${c.id>currentChapter?'disabled':''} aria-label="Rozdział ${c.roman}"></button>`).join('')}</div>${swipeHint}<div class="map-lower"><small class="eyebrow">NAJWAŻNIEJSZE ZAPISKI</small><h2>Ślady na szlaku</h2><div class="journey-feed"><button class="journey-feed-item" data-view-jump="training"><span class="feed-icon">↗</span><span><small>OSTATNI TRENING</small><strong>${lastWorkout?esc(lastWorkout.type):'Rozpocznij wędrówkę'}</strong><span>${lastWorkout?`${esc(lastWorkout.date)} · ${fmt(lastWorkout.km)} km${lastWorkout.minutes?' · '+fmt(lastWorkout.minutes)+' min':''}`:'Dodaj pierwszy trening, aby ruszyć ze szlakiem.'}</span></span><span class="feed-arr">›</span></button><button class="journey-feed-item" data-view-jump="chronicle"><span class="feed-icon">⌖</span><span><small>ODWIEDZONA LOKACJA</small><strong>${lastStop?esc(lastStop.name):'Przed Tobą pierwsze odkrycie'}</strong><span>${lastStop?`${fmt(lastStop.km)} km szlaku`:'Pierwsze miejsce odsłoni się po treningu.'}</span></span><span class="feed-arr">›</span></button><button class="journey-feed-item" data-view-jump="growth"><span class="feed-icon">✧</span><span><small>ZDOBYTE ODZNAKI</small><strong>${sealsCount?`${sealsCount} odznak`:'Pierwsza odznaka czeka'}</strong><span>${sealsCount?'Sprawdź cały rozwój wędrowca.':'Regularność szybko odblokuje pierwszą nagrodę.'}</span></span><span class="feed-arr">›</span></button></div></div></section>`;
+ return `<section class="map-shell"><div class="map-copy"><small class="eyebrow">ROZDZIAŁ ${roman} · ${fmt(meta.start)}–${fmt(meta.goal)} KM SZLAKU</small><h2>${esc(meta.title)}</h2><p>${esc(meta.intro)}</p></div><div class="map-stage" id="mapStage" data-chapter="${chapter}" aria-label="Mapa rozdziału ${roman}"><div class="map-art" id="mapArt"><img class="map-landscape chapter-portrait-image" src="${MAP_IMAGES[chapter]}" alt="${MAP_ALTS[chapter]}" draggable="false">${mapProgressOverlay(chapter,distance,currentChapter)}</div></div><div class="map-controls"><div class="map-tools"><button data-zoom="in" aria-label="Przybliż">+</button><button data-zoom="out" aria-label="Oddal">−</button><button data-zoom="reset" aria-label="Wyśrodkuj">⌖</button></div><div class="map-bottom-hud"><div class="map-bottom-row"><span class="hud-pill map-chapter-pill">ROZDZIAŁ ${roman}</span><span class="hud-pill main-km">${fmt(chapterDistance)} / ${fmt(meta.goal-meta.start)} km</span></div><span class="hud-pill discovery">${unlockedVisuals} z ${totalVisuals} odkrytych punktów</span></div></div><div class="chapter-track" aria-label="Postęp rozdziałów">${CHAPTERS.map(c=>`<button class="chapter-dot ${c.id===chapter?'on':''} ${c.id>currentChapter?'future':''}" data-chapter-select="${c.id}" ${c.id>currentChapter?'disabled':''} aria-label="Rozdział ${c.roman}" aria-current="${c.id===chapter?'step':'false'}"></button>`).join('')}</div>${swipeHint}<div class="map-lower"><small class="eyebrow">NAJWAŻNIEJSZE ZAPISKI</small><h2>Ślady na szlaku</h2><div class="journey-feed"><button class="journey-feed-item" data-view-jump="training"><span class="feed-icon">↗</span><span><small>OSTATNI TRENING</small><strong>${lastWorkout?esc(lastWorkout.type):'Rozpocznij wędrówkę'}</strong><span>${lastWorkout?`${esc(lastWorkout.date)} · ${fmt(lastWorkout.km)} km${lastWorkout.minutes?' · '+fmt(lastWorkout.minutes)+' min':''}`:'Dodaj pierwszy trening, aby ruszyć ze szlakiem.'}</span></span><span class="feed-arr">›</span></button><button class="journey-feed-item" data-view-jump="chronicle"><span class="feed-icon">⌖</span><span><small>ODWIEDZONA LOKACJA</small><strong>${lastStop?esc(lastStop.name):'Przed Tobą pierwsze odkrycie'}</strong><span>${lastStop?`${fmt(lastStop.km)} km szlaku`:'Pierwsze miejsce odsłoni się po treningu.'}</span></span><span class="feed-arr">›</span></button><button class="journey-feed-item" data-view-jump="growth"><span class="feed-icon">✧</span><span><small>ZDOBYTE ODZNAKI</small><strong>${sealsCount?`${sealsCount} odznak`:'Pierwsza odznaka czeka'}</strong><span>${sealsCount?'Sprawdź cały rozwój wędrowca.':'Regularność szybko odblokuje pierwszą nagrodę.'}</span></span><span class="feed-arr">›</span></button></div></div></section>`;
 }
 function applyMapTransform(){
  const art=$('#mapArt'),stage=$('#mapStage');
@@ -498,18 +314,19 @@ function attachMap(){
  mapZoom=1;mapPan={x:0,y:0};
  const art=$('#mapArt'),stage=$('#mapStage');if(!art||!stage)return;
  applyMapTransform();
- stage.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{if(b.dataset.zoom==='reset'){mapZoom=1;mapPan={x:0,y:0}}else mapZoom=Math.max(1,Math.min(3,mapZoom+(b.dataset.zoom==='in'?.35:-.35)));applyMapTransform()});
- let down=null;
- stage.onpointerdown=e=>{if(mapZoom===1||e.target.closest('button')&&!e.target.closest('.map-node'))return;down={x:e.clientX,y:e.clientY,px:mapPan.x,py:mapPan.y};stage.setPointerCapture(e.pointerId)};
- stage.onpointermove=e=>{if(!down)return;mapPan={x:down.px+e.clientX-down.x,y:down.py+e.clientY-down.y};applyMapTransform()};
+ document.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{if(b.dataset.zoom==='reset'){mapZoom=1;mapPan={x:0,y:0}}else mapZoom=Math.max(1,Math.min(3,mapZoom+(b.dataset.zoom==='in'?.35:-.35)));applyMapTransform()});
+ let down=null,dragged=false;
+ stage.onpointerdown=e=>{dragged=false;if(mapZoom===1||e.target.closest('[data-zoom]'))return;down={x:e.clientX,y:e.clientY,px:mapPan.x,py:mapPan.y}};
+ stage.onpointermove=e=>{if(!down)return;if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>8){dragged=true;stage.setPointerCapture(e.pointerId)}mapPan={x:down.px+e.clientX-down.x,y:down.py+e.clientY-down.y};applyMapTransform()};
  stage.onpointerup=stage.onpointercancel=()=>down=null;
- stage.querySelectorAll('[data-stop-km]').forEach(btn=>btn.addEventListener('click',()=>openStopByVisual(+btn.dataset.stopKm)));
+ stage.onclick=e=>{const btn=e.target.closest('[data-stop-km]');if(btn&&!dragged)openStopByVisual(+btn.dataset.stopKm)};
  document.querySelectorAll('[data-chapter-select]').forEach(btn=>btn.onclick=()=>{selectedChapter=+btn.dataset.chapterSelect;render()});
 }
 function bindChapterSwipe(){
  const stage=document.getElementById('mapStage');if(!stage)return;
  let start=null;
- stage.addEventListener('touchstart',e=>{if(e.touches.length!==1||mapZoom>1){start=null;return}const t=e.touches[0];start={x:t.clientX,y:t.clientY}}, {passive:true});
+ stage.addEventListener('touchcancel',()=>start=null,{passive:true});
+ stage.addEventListener('touchstart',e=>{if(animating||e.touches.length!==1||mapZoom>1){start=null;return}const t=e.touches[0];start={x:t.clientX,y:t.clientY}}, {passive:true});
  stage.addEventListener('touchend',e=>{if(!start||mapZoom>1)return;const t=e.changedTouches[0];const dx=t.clientX-start.x,dy=t.clientY-start.y;start=null;
    if(Math.abs(dx)<48||Math.abs(dx)<Math.abs(dy)*1.25)return;
    const current=chapterByDistance(Math.min(mapK(),TOTAL-.01)).id;
@@ -518,39 +335,49 @@ function bindChapterSwipe(){
    if(n!==selected){selectedChapter=n;mapZoom=1;mapPan={x:0,y:0};render();}
  },{passive:true});
 }
+let trailFrame=0,trailTimer=0,trailVersion=0;
+function finishTrail(){
+ cancelAnimationFrame(trailFrame);clearTimeout(trailTimer);trailVersion++;
+ animating=false;displayK=null;recentUnlockNames=[];
+}
 function animateTrail(from,to,done){
- const stage=$('#mapStage');if(!stage||reduceMotion()||to<=from){displayK=null;recentUnlockNames=[];done();return}
- const duration=Math.min(2600,900+(to-from)*10);
- const t0=performance.now();
+ if(reduceMotion()||to<=from){displayK=null;animating=false;done();return}
+ const version=trailVersion,duration=Math.min(3200,1100+(to-from)*8),t0=performance.now();
  animating=true;
  const step=now=>{
-   const p=Math.min(1,(now-t0)/duration),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
-   displayK=from+(to-from)*e;
-   const current=chapterByDistance(Math.min(displayK,TOTAL-.01)).id;
-   if(!selectedChapter||selectedChapter>current)selectedChapter=current;
-   const art=stage.querySelector('.map-progress-overlay');
-   if(art){
-     const chapter=selectedChapter||current;
-     art.outerHTML=mapProgressOverlay(chapter,displayK,current);
-     stage.querySelectorAll('[data-stop-km]').forEach(btn=>btn.addEventListener('click',()=>openStopByVisual(+btn.dataset.stopKm)));
-   }
-   const kmEl=stage.querySelector('.main-km');
-   if(kmEl){
-     const meta=CHAPTERS[(selectedChapter||current)-1];
-     const chapterDistance=Math.min(Math.max(0,displayK-meta.start),meta.goal-meta.start);
-     kmEl.textContent=`${fmt(chapterDistance)} / ${fmt(meta.goal-meta.start)} km`;
-   }
-   if(p<1)requestAnimationFrame(step);else{animating=false;displayK=null;setTimeout(()=>{recentUnlockNames=[];const overlay=stage.querySelector('.map-progress-overlay');if(overlay){const current2=chapterByDistance(Math.min(travel(),TOTAL-.01)).id;overlay.outerHTML=mapProgressOverlay(selectedChapter||current2,travel(),current2);stage.querySelectorAll('[data-stop-km]').forEach(btn=>btn.addEventListener('click',()=>openStopByVisual(+btn.dataset.stopKm)));}},1200);done()}
+  if(version!==trailVersion)return;
+  const p=Math.min(1,(now-t0)/duration),ease=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+  displayK=from+(to-from)*ease;
+  const chapter=chapterByDistance(Math.min(displayK,TOTAL-.01)).id;
+  selectedChapter=chapter;
+  let stage=$('#mapStage');if(!stage){finishTrail();return}
+  if(+stage.dataset.chapter!==chapter){render();stage=$('#mapStage');stage.scrollIntoView({block:'start',behavior:'auto'})}
+  const point=pointAtKm(chapter,displayK),marker=stage.querySelector('.map-traveler');
+  marker.classList.add('is-moving');marker.style.left=point.x+'%';marker.style.top=point.y+'%';
+  stage.querySelectorAll('[data-stop-km]').forEach(btn=>{
+   const km=+btn.dataset.stopKm;btn.classList.toggle('done',km<=displayK);btn.classList.toggle('future',km>displayK);
+   btn.classList.toggle('new',km<=displayK&&recentUnlockNames.includes(btn.dataset.stopName));
+  });
+  const meta=CHAPTERS[chapter-1];
+  $('.main-km').textContent=`${fmt(Math.max(0,displayK-meta.start))} / ${fmt(meta.goal-meta.start)} km`;
+  $('.hud-pill.discovery').textContent=`${chapterVisualStops(chapter).filter(s=>s.km<=displayK).length} z ${chapterVisualStops(chapter).length} odkrytych punktów`;
+  if(p<1)trailFrame=requestAnimationFrame(step);else{animating=false;displayK=null;done()}
  };
- requestAnimationFrame(step);
+ trailFrame=requestAnimationFrame(step);
 }
 function celebrate(before){
+ finishTrail();
  const after=travel(),reached=stops.filter(s=>s.km>before&&s.km<=after),seals=syncSeals(false);
  recentUnlockNames=reached.map(s=>s.name);
  revealQueue=[...reached.map(stop=>({type:'stop',stop})),...seals.map(seal=>({type:'seal',seal}))];
- if(after<=before){render();if(revealQueue.length)setTimeout(showReveal,300);return}
- view='map';focused=null;selectedChapter=chapterByDistance(Math.min(after,TOTAL-.01)).id;displayK=before;render();
- const stage=$('#mapStage');if(stage){const y=stage.getBoundingClientRect().top+scrollY-16;scrollTo({top:Math.max(0,y),behavior:reduceMotion()?'auto':'smooth'})}
- setTimeout(()=>animateTrail(before,after,()=>{render();if(revealQueue.length)setTimeout(showReveal,450)}),360);
+ const complete=()=>{render();trailTimer=setTimeout(()=>{recentUnlockNames=[];if(revealQueue.length)showReveal()},reduceMotion()?0:450)};
+ if(after<=before){complete();return}
+ view='map';focused=null;selectedChapter=chapterByDistance(Math.min(before,TOTAL-.01)).id;displayK=before;render();
+ $('#mapStage')?.scrollIntoView({block:'start',behavior:'auto'});
+ trailTimer=setTimeout(()=>animateTrail(before,after,complete),reduceMotion()?0:180);
 }
-function render(){document.body.classList.toggle('view-map',view==='map');let labels={map:'Droga Pierścienia',training:'Dziennik treningów',chronicle:'Kronika podróży',growth:'Twoja kondycja'};$('#pageTitle').textContent=labels[view];$('#eyebrow').textContent=view==='map'?'WYPRAWA I • DROGA FRODA':'ŚRÓDZIEMIE • WYPRAWA I';$('#screen').innerHTML={map:renderMap,training:renderTraining,chronicle:renderChronicle,growth:renderGrowth}[view]();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#newWorkout')?.addEventListener('click',()=>workoutSheet());if(view==='map'){attachMap();bindChapterSwipe()} document.querySelectorAll('[data-view-jump]').forEach(b=>b.onclick=()=>setView(b.dataset.viewJump));bindBanner();$('#journalToggle')?.addEventListener('click',()=>{journalAll=!journalAll;render()})}
+
+function render(){document.body.classList.toggle('view-map',view==='map');let labels={map:'Droga Pierścienia',training:'Dziennik treningów',chronicle:'Kronika podróży',growth:'Twoja kondycja'};$('#pageTitle').textContent=labels[view];$('#eyebrow').textContent=view==='map'?'WYPRAWA I • DROGA FRODA':'ŚRÓDZIEMIE • WYPRAWA I';$('#screen').innerHTML={map:renderMap,training:renderTraining,chronicle:renderChronicle,growth:renderGrowth}[view]();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#newWorkout')?.addEventListener('click',()=>workoutSheet());$('#importBackup')?.addEventListener('click',()=>$('#importFile').click());if(view==='map'){attachMap();bindChapterSwipe()} document.querySelectorAll('[data-view-jump]').forEach(b=>b.onclick=()=>setView(b.dataset.viewJump));$('#journalToggle')?.addEventListener('click',()=>{journalAll=!journalAll;render()})}
+
+// Initialize only after all application state has been declared.
+$('#settingsBtn').onclick=settings;document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));$('#screen').addEventListener('click',e=>{const b=e.target.closest('[data-edit],[data-stop],[data-seal]');if(b?.dataset.seal)sealSheet(b.dataset.seal);else if(b?.dataset.edit)workoutSheet(b.dataset.edit);else if(b?.dataset.stop!==undefined)goToStop(+b.dataset.stop)});$('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});syncSeals(true);try{render()}catch(error){console.error('Błąd ekranu Śródziemia',error);const target=document.querySelector('#screen');if(target){target.innerHTML='<section class="app-error"><h2>Nie udało się otworzyć kroniki</h2><p>Wystąpił problem podczas wyświetlania wyprawy. Twoje treningi nie zostały usunięte.</p><pre id="errorInfo"></pre><button id="retryRender" class="primary">Spróbuj ponownie</button></section>';target.querySelector('#errorInfo').textContent=String(error&&error.message||error);target.querySelector('#retryRender').onclick=()=>location.reload();}}if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
