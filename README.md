@@ -53,3 +53,6 @@ Aktualizacja v3.9: widok Cała trasa otrzymał kartę hero w tym samym stylu co 
 
 ## v4.0 — interaktywne karty map
 Karty rozdziałów są generowane z HTML/CSS/SVG, nie zawierają gotowych tekstów ani wrysowanego postępu. Jeden atlas, aktywne znaczniki, licznik odkryć i przebyty dystans. Nie ma podwójnych map ani osobnych grafik typu hero-ch*.png.
+
+
+Wersja 5.1: mapa dominuje na ekranie, opisy rozdziałów są pod nagłówkiem, uproszczone sekcje bez ciężkich ramek.
