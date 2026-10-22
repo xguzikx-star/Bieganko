@@ -1,0 +1,17 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const vm=require('node:vm');
+const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'../app.js'),'utf8');
+const context=vm.createContext({});vm.runInContext(src.slice(src.indexOf('function civilDay('),src.indexOf("let analysisPeriod="))+';this.stats=fitnessStats;this.day=civilDay;this.mondayDay=mondayDay;this.dayString=dayString;',context);
+const stats=(w,p='all',date='2026-10-22')=>context.stats(w,date,p);
+const w=(date,km,minutes,type='Bieg',place='outdoors',incline=0)=>({date,km,minutes,type,place,incline});
+test('empty and legacy data do not invent time, pace or records',()=>{let a=stats([]);assert.equal(a.pace,null);assert.equal(a.recordWeek,null);assert.equal(a.gap,null);a=stats([w('2026-10-01',5),w('2026-10-02',3,null)]);assert.equal(a.km,8);assert.equal(a.minutes,null);assert.equal(a.activeDays,2);assert.equal(a.mean,4)});
+test('weighted pace uses only workouts with a positive recorded duration',()=>{const a=stats([w('2026-10-01',5,30),w('2026-10-02',10,50),w('2026-10-03',100),w('2026-10-04',5,0)]);assert.equal(a.km,120);assert.equal(a.minutes,80);assert.equal(a.pace,80/15);assert.equal(a.speed,11.25)});
+test('complete 4-week blocks exclude current incomplete week and require evidence',()=>{const ws=[];for(let i=0;i<8;i++){ws.push(w(context.dayString(context.mondayDay(context.day('2026-10-22'))-(8-i)*7),i<4?5:6,30))}let a=stats([...ws,w('2026-10-22',100,600)]);assert.equal(a.recentKm,24);assert.equal(a.previousKm,20);assert(Math.abs(a.distanceChange-20)<1e-9);assert.equal(stats(ws.slice(-2)).distanceChange,null)});
+test('civil dates, ISO year boundaries, leap day and DST are stable',()=>{assert.equal(context.day('2026-02-30'),null);assert.notEqual(context.day('2024-02-29'),null);let a=stats([w('2025-12-29',5),w('2026-01-04',6),w('2026-01-05',7)],'all','2026-01-06');assert.equal(a.recordWeek,11);assert.equal(a.bestStreak,2);a=stats([w('2026-03-23',2),w('2026-03-30',3)],'all','2026-03-30');assert.equal(a.bestStreak,2);assert.equal(a.gap,7)});
+test('period includes zero weeks; 30-day count is independent of selected period',()=>{const a=stats([w('2026-09-23',5),w('2026-10-22',7)],'4');assert.equal(a.count,1);assert.equal(a.weeks.length,4);assert.equal(a.weeklyMean,1.75);assert.equal(a.activeDays,2)});
+test('pace groups separate activity, surface, distance and incline',()=>{const rows=[w('2026-10-01',5,30),w('2026-10-02',5.5,31),w('2026-10-03',5,30,'Marsz'),w('2026-10-04',5,30,'Bieg','treadmill'),w('2026-10-05',8,45),w('2026-10-06',5,30,'Bieg','outdoors',2)];const a=stats(rows);assert.equal(a.comparable.length,1);assert.equal(a.comparable[0].ws.length,2)});
+test('edit and deletion recompute records without mutating supplied legacy fields',()=>{const rows=[{...w('2026-10-01',5),custom:{keep:true}},w('2026-10-08',8)];const original=JSON.stringify(rows);assert.equal(stats(rows).recordLongest,8);assert.equal(stats(rows.slice(0,1)).recordLongest,5);assert.equal(stats([{...rows[0],km:10},rows[1]]).recordLongest,10);assert.equal(JSON.stringify(rows),original)});
+test('invalid distance, date and future activity are excluded',()=>{assert.equal(stats([w('bad',5),w('2026-02-30',5),w('2027-01-01',5),w('2026-10-01',-1),w('2026-10-01',Infinity)]).count,0)});
+
+test('short and long distances are not comparable merely because both are below 2 km',()=>{const a=stats([w('2026-10-01',.1,1),w('2026-10-02',1.9,12)]);assert.equal(a.comparable.length,0)});

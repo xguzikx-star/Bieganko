@@ -31,3 +31,20 @@ Nie wykonano testu na fizycznym iPhonie ani w Safari. Próba instalacji WebKit z
 - Visual review: 390 px screenshot, dark green/ivory/gold atlas with large artwork and compact summaries.
 - Asset query versions updated to 5.14. Existing service worker does not cache requests.
 - Limitation: Safari/iOS was not available for a device test. Implementation uses native buttons, ARIA, intrinsic image dimensions and CSS grid expansion with reduced-motion support; no external runtime dependencies were added.
+
+## Kronika, analiza kondycji i obsługa mapy — 5.15 (22.10.2026)
+
+Baza: `ec24b3d`, zgodna ze zdalnym `main` podczas rozpoczęcia prac.
+
+- Atlas: ilustracja na całą szerokość przycisku, wspólny kadr 16:9, pełna grafika w rozwinięciu. Skrót opisu znika po rozwinięciu; pełna treść i data odkrycia pozostają dostępne. Usunięto limit 140 px i boczny układ miniatur.
+- Mapa: przyczyną dodatkowego odstępu był osobny wiersz nagłówka z samymi ustawieniami. Przycisk ustawień jest teraz poza przepływem, przy górnej bezpiecznej krawędzi. Tekst rozdziału nadal poprzedza obraz w normalnym przepływie. Rozmiary tekstów i naturalne proporcje czterech map pozostają zachowane.
+- Przycisk „+ Dodaj aktywność” pod mapą i kilometrażem uruchamia istniejący formularz. Pole `minutes` już istniało i pozostaje opcjonalne. Nie zmieniono kluczy localStorage ani grafik źródłowych.
+- Rozwój: pięć obszarów, okresy 4/12 tygodni i cała historia, rzeczywiste kilometry, ważone tempo/prędkość, grupy podobnych aktywności, kalendarz, serie i rekordy. Porównanie objętości opiera się na pełnych tygodniach. Progi wymaganej liczby danych i informacyjnego wzrostu 30% są opisane w interfejsie. Braki czasu nie są interpretowane jako zerowy czas. Brak oceny punktowej lub estymacji VO₂max.
+- `tests/mobile.cjs`: **489/489 PASS**, Chromium i emulacja dotyku, cztery mapy przy 320, 375, 390, 430 i 768 px; również animacje, nawigacja, import/eksport, edycja i zachowanie pól dawnych danych.
+- `tests/chronicle.cjs`: **56/56 PASS**, pięć wymaganych szerokości, rozwijanie, daty odkryć, niepełna historia i aktualizacje.
+- `node --test tests/fitness.cjs`: **9/9 PASS**. Ważenie tempa, brak czasu, brak danych, pełne bloki tygodniowe, minimalna liczba obserwacji, zmiana roku i DST, błędne daty, rekordy po edycji/usunięciu, grupowanie tempa i brak mutacji wejścia.
+- `tests/fitness-mobile.cjs`: **56/56 PASS**, pięć szerokości, wszystkie okresy, wykresy, atlas na pełną szerokość, pełna ilustracja, brak powielonego widocznego opisu, zapis z mapy, edycja oraz usuwanie i przeliczenie statystyk.
+- Brak fizycznego iPhone’a/Safari w środowisku. Emulacja Chromium nie stanowi testu Safari iOS.
+
+- Kontrola wizualna aktualnych zrzutów 390 px: mapa rozpoczyna się pod krótkim nagłówkiem, atlas wypełnia szerokość sekcji, panel analiz ma kompaktowe wskaźniki i czytelne wykresy.
+- Próba instalacji WebKit 26.5: pobieranie zablokowane HTTP 403 `Domain forbidden`; test WebKit nie został wykonany.
