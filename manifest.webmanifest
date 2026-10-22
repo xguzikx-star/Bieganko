@@ -1,1 +1,20 @@
-{"name": "Śródziemie", "short_name": "Śródziemie", "start_url": "./index.html", "display": "standalone", "background_color": "#07110f", "theme_color": "#07110f", "icons": [{"src": "./icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png"}]}
+{
+  "name": "Śródziemie",
+  "short_name": "Śródziemie",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#07110f",
+  "theme_color": "#07110f",
+  "icons": [
+    {
+      "src": "./icon-192.png?v=20261022-2",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png?v=20261022-2",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
