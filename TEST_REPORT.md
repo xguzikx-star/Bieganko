@@ -22,3 +22,12 @@ Gradient ma wyłącznie rolę dekoracyjną: `min(4vw,24px)` na samej krawędzi i
 ## Safari / iOS — ograniczenie weryfikacji
 
 Nie wykonano testu na fizycznym iPhonie ani w Safari. Próba instalacji WebKit zakończyła się HTTP 403 „Domain forbidden” z powodu polityki sieciowej środowiska. Emulacja mobilna Chromium i symulacja safe area nie zastępują tego testu. Układ nie wymaga `:has()`, obliczania wysokości mapy z `vh` ani dopasowania absolutnie pozycjonowanego obrazu do rozmiaru kontenera.
+
+## Chronicle redesign — 2026-10-22
+
+- `node --check app.js` and `git diff --check`: passed.
+- Existing `tests/mobile.cjs`: 489 checks passed in Chromium with touch/mobile emulation, including map layouts, workout persistence, editing, JSON backup/restore and reduced motion.
+- `tests/chronicle.cjs`: tests 320, 375, 390, 430 and 768 px; all 20 discoveries, descending mileage, accordion and keyboard interaction, intrinsic expanded heights, long narrative/notes, no horizontal overflow, chronological discovery dates, no invented Hobbiton date, unchanged stored data, empty history, statistics after addition/deletion, concealed locked artwork, journal pagination and bottom navigation clearance.
+- Visual review: 390 px screenshot, dark green/ivory/gold atlas with large artwork and compact summaries.
+- Asset query versions updated to 5.14. Existing service worker does not cache requests.
+- Limitation: Safari/iOS was not available for a device test. Implementation uses native buttons, ARIA, intrinsic image dimensions and CSS grid expansion with reduced-motion support; no external runtime dependencies were added.
