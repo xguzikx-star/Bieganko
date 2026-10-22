@@ -42,6 +42,57 @@ async function swipe(page,dx,dy=0,cancel=false){await page.locator('#mapStage').
  }
  await page.setViewportSize({width:390,height:844});
  await page.locator('[data-view="map"]').click();
+ // Every chapter at every requested width: image-driven layout and shared marker coordinates.
+ await seed(page,{schema:1,workouts:[{id:'layout',date:'2026-01-01',type:'Marsz',km:1000}]});
+ for(const width of [320,375,390,430,768]){
+  await page.setViewportSize({width,height:844});
+  for(const chapter of [1,2,3,4]){
+   await page.locator(`[data-chapter-select="${chapter}"]`).click();
+   await page.locator('.map-landscape').evaluate(img=>img.decode());
+   const layout=await page.evaluate(()=>{
+    const stage=document.querySelector('.map-stage'),art=document.querySelector('.map-art'),img=document.querySelector('.map-landscape'),copy=document.querySelector('.map-copy');
+    const box=img.getBoundingClientRect(),frame=stage.getBoundingClientRect(),header=copy.getBoundingClientRect(),fade=getComputedStyle(stage,'::before');
+    const anchors=chapterVisualStops(+stage.dataset.chapter);
+    return {
+     natural:Math.abs(box.height-box.width*img.naturalHeight/img.naturalWidth)<.1,
+     fullWidth:Math.abs(box.width-innerWidth)<.1,
+     noOverlap:header.bottom<=box.top&&Math.abs(frame.height-box.height)<.1,
+     flow:[stage,art,copy,stage.parentElement].every(el=>!['hidden','clip'].includes(getComputedStyle(el).overflowY)),
+     fadeClear:parseFloat(fade.height)<Math.min(...anchors.map(p=>p.y/100*box.height))-6,
+     font:[getComputedStyle(copy.querySelector('h2')).fontSize,getComputedStyle(copy.querySelector('p')).fontSize].map(parseFloat),
+     aligned:[...document.querySelectorAll('.map-node')].every((node,i)=>{const b=node.getBoundingClientRect();return Math.abs(b.x+b.width/2-box.x-anchors[i].x/100*box.width)<.1&&Math.abs(b.y+b.height/2-box.y-anchors[i].y/100*box.height)<.1}),
+     overflow:document.documentElement.scrollWidth>innerWidth
+    };
+   });
+   for(const property of ['natural','fullWidth','noOverlap','flow','fadeClear','aligned'])ok(layout[property],`chapter ${chapter}, ${width}px: ${property}`);
+   ok(!layout.overflow,`chapter ${chapter}, ${width}px: no horizontal overflow`);
+   ok(Math.abs(layout.font[0]-Math.max(31,Math.min(43,width*.077)))<.02&&Math.abs(layout.font[1]-Math.max(12,Math.min(14,width*.0305)))<.02,'existing title and description sizes retained');
+   for(const edge of ['top','bottom']){
+    ok(await page.locator('.map-landscape').evaluate((img,edge)=>{
+     const b=img.getBoundingClientRect(),y=b[edge]+scrollY;
+     scrollTo(0,edge==='top'?y:y-innerHeight/2);
+     const current=img.getBoundingClientRect(),nav=document.querySelector('.bottom').getBoundingClientRect();
+     return current[edge]>=-1&&current[edge]<nav.top;
+    },edge),`chapter ${chapter}: ${edge} reachable above navigation`);
+   }
+   await page.locator('[data-zoom="in"]').click();
+   ok(await page.locator('.map-stage').evaluate(el=>getComputedStyle(el).overflow==='hidden'&&getComputedStyle(el,'::before').display==='none'),'zoom alone clips its viewport and removes fade');
+   await page.locator('.map-stage').evaluate(stage=>{
+    stage.dispatchEvent(new PointerEvent('pointerdown',{pointerId:1,clientX:150,clientY:300,bubbles:true}));
+    // Small movement tests panning without synthetic pointer capture.
+    stage.dispatchEvent(new PointerEvent('pointermove',{pointerId:1,clientX:155,clientY:305,bubbles:true}));
+    stage.dispatchEvent(new PointerEvent('pointerup',{pointerId:1,bubbles:true}));
+   });
+   ok(await page.evaluate(()=>mapPan.x===5&&mapPan.y===5),'map can be panned after zoom');
+   await page.locator('[data-zoom="reset"]').click();
+   ok(await page.locator('.map-stage').evaluate(el=>getComputedStyle(el).overflow==='visible'&&el.style.touchAction==='pan-y'),'reset restores complete map and page scrolling');
+   await page.locator('.map-node').first().click();
+   ok(await page.locator('#overlay').evaluate(el=>!el.hidden),'route point opens its location');
+   await page.locator('#closeSheet').click();
+  }
+ }
+ await page.setViewportSize({width:390,height:844});
+ await seed(page);
  // Simulate the iPhone safe area using the same CSS variable fed by env().
  await page.addStyleTag({content:':root{--safe-bottom:34px}'});
  ok(await page.locator('.bottom').evaluate(el=>parseFloat(getComputedStyle(el).paddingBottom)>=42),'safe area reserved');

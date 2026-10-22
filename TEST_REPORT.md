@@ -1,33 +1,24 @@
-# Raport weryfikacji Śródziemia 5.5
+# Weryfikacja układu map — 5.13
 
-Data: 22 października 2026 r.
-Gałąź robocza: `main`, baza `46746bc`.
+Data: 22 października 2026 r. Baza: aktualne `main`, `3778ce9`.
 
-## Wynik
+## Przyczyna i rozwiązanie
 
-**209/209 sprawdzeń zakończonych powodzeniem** w Chromium z emulacją telefonu i dotyku. Brak nieobsłużonych błędów JavaScript podczas scenariuszy.
+Nagłówek był absolutnie pozycjonowany nad ilustracją. Warstwy gradientów w `style.css` i w bloku v11 w `index.html` przykrywały górę map; ich wysokość i odstępy zależały od wysokości ekranu, zamiast od rzeczywistej wysokości tekstu. Dodatkowo obraz był absolutnie pozycjonowany w kontenerze o narzuconych proporcjach.
 
-- `node --check app.js`, `node --check sw.js`, `node --check tests/mobile.cjs`: poprawna składnia.
-- `git diff --check`: brak błędów białych znaków.
-- Układ Mapa / Trening / Kronika / Rozwój: 320×568, 375×667, 390×844, 430×932 i 844×390 px. Brak poziomego przepełnienia; cztery dostępne przyciski nawigacji; końcówka treści ponad menu.
-- Bezpieczny obszar dolny: dodatkowe 34 px sprawdzone przez zmienną CSS używaną przez `env(safe-area-inset-bottom)`.
-- Opis i sterowanie poza mapą; zgodność proporcji ilustracji z oryginałem 344×660.
-- Wszystkie używane mapy, ilustracje lokacji, odznaki oraz lokalne zasoby HTML: poprawne nazwy i odpowiedzi HTTP.
-- Dotychczasowe treningi w `srodziemie.v1`: zachowane wszystkie pola po uruchomieniu.
-- Eksport i ponowny import JSON: zachowane treningi, plan i dodatkowe metadane. Uszkodzona kopia nie zmienia treningów.
-- Edycja treningu: zachowane pola spoza formularza, m.in. tętno, strefy i pola rozszerzeń.
-- Zapis nowego treningu: dopisany trening, ruch znacznika między klatkami, przejście I → II oraz przejście przez kilka rozdziałów do IV.
-- Odkrycie lokacji i pierwsza odznaka: widoczne ekrany nagród; kolekcja 18 odznak i szczegóły.
-- Gesty poziome: wszystkie odblokowane rozdziały; brak dostępu do zablokowanych. Pionowy i anulowany gest oraz przesuwanie powiększonej mapy nie zmieniają rozdziału.
-- Nawigacja podczas animacji: bezpiecznie kończy ruch bez utraty treningu.
-- Ograniczenie ruchu: wyłączona animacja podróży i zachowane zdobyte nagrody.
+Nagłówek i ilustracja zajmują teraz kolejne wiersze zwykłego układu dokumentu. Mapa jest obrazem `width:100%;height:auto`; jej wysokość wynika z pliku, a atrybuty wymiarów rezerwują prawidłowe miejsce przed pobraniem obrazu. Rozdział I: 864×1536, pozostałe: 1024×1536. Mapy zajmują pełną szerokość widoku, także przy 768 px. Usunięto nakładające się definicje nagłówka i inline `<style>`; docelowe reguły są w `style.css`.
 
-## Odtworzenie
+Gradient ma wyłącznie rolę dekoracyjną: `min(4vw,24px)` na samej krawędzi ilustracji, poniżej tekstu. Kończy się przed najwyższymi punktami trasy. Nie wpływa na wymiary ani współrzędne obrazu. Domyślnie kontenery nie przycinają mapy. Dopiero świadome przybliżenie włącza przycinanie powiększonego widoku i wyłącza gradient; reset przywraca całą ilustrację i pionowe przewijanie strony. Obraz i punkty są transformowane razem. Zachowano rozmiary i rodziny czcionek nagłówka, treści, obrazy źródłowe, dolną nawigację i mechanikę treningów. Wersje CSS i JS w `index.html`: `5.13`.
 
-Z katalogu repozytorium uruchom serwer `python -m http.server 8000 --bind 127.0.0.1`, a następnie `node tests/mobile.cjs` z zainstalowanym Playwright i Chromium. W tej sesji użyto `CHROMIUM_PATH=/usr/bin/chromium`. Szczegóły konfiguracji zawiera README.
+## Wyniki
 
-## Granice weryfikacji i wdrożenie
+- `CHROMIUM_PATH=/usr/bin/chromium node tests/mobile.cjs`: **489/489 PASS**, Chromium, emulacja telefonu i dotyku; brak nieobsłużonych błędów JavaScript.
+- Rozdziały I–IV × szerokości 320, 375, 390, 430, 768 px: naturalne proporcje, pełna szerokość, nagłówek poza mapą, brak przycinania i poziomego przepełnienia, gradient poza punktami trasy, zachowane rozmiary tekstu, poprawne współrzędne wszystkich punktów.
+- Każda mapa: górna i dolna krawędź osiągalne przewijaniem nad nawigacją; przybliżenie, przesunięcie, reset i otwieranie punktu trasy działają.
+- Istniejące regresje: układ pozostałych sekcji, nawigacja, symulowany dolny safe area 34 px, zasoby HTTP, import/eksport, zachowanie danych treningowych, edycja, animacja przejść między rozdziałami, gesty, blokowanie przyszłych rozdziałów, ograniczony ruch i odznaki: PASS.
+- Kontrola wizualna rozdziału III przy 390 px: widoczne Lothlórien i Rauros; krótki gradient na krawędzi mapy.
+- `node --check app.js`, `node --check sw.js`, `node --check tests/mobile.cjs`, `git diff --check`: PASS.
 
-Nie wykonano testu w Safari/WebKit ani na fizycznym iPhonie. Bezpieczny obszar sprawdzono poprzez symulację wartości CSS, a nie rzeczywisty odczyt z urządzenia. Przed publikacją warto sprawdzić Safari i aplikację dodaną do ekranu początkowego, szczególnie zachowanie przy otwartej klawiaturze.
+## Safari / iOS — ograniczenie weryfikacji
 
-Zmiany są przygotowane w lokalnym `main`. Publikacja GitHub Pages nie jest częścią wykonanego testu. Zachowanie adresu aplikacji zachowuje dotychczasowy origin localStorage; format treningów i klucz danych nie wymagają migracji. CSS i JS otrzymały parametr wersji `5.5`.
+Nie wykonano testu na fizycznym iPhonie ani w Safari. Próba instalacji WebKit zakończyła się HTTP 403 „Domain forbidden” z powodu polityki sieciowej środowiska. Emulacja mobilna Chromium i symulacja safe area nie zastępują tego testu. Układ nie wymaga `:has()`, obliczania wysokości mapy z `vh` ani dopasowania absolutnie pozycjonowanego obrazu do rozmiaru kontenera.
