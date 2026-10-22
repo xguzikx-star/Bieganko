@@ -612,3 +612,95 @@ html,body{background:#06100f}
 .portrait-hotspots{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
 .portrait-hotspots [data-stop]{pointer-events:all;cursor:pointer}
 .portrait-hotspots [data-stop]:focus-visible{outline:none;stroke:#f1d5a0;stroke-width:2;fill:#f1d5a033}
+
+/* v4.9 - spójniejszy interfejs i lepsze proporcje map */
+:root{
+  --gold-1:#f2dfb7;
+  --gold-2:#cba164;
+  --gold-3:#8d6636;
+  --app-grad:radial-gradient(ellipse at 52% 0%,rgba(34,87,76,.55),transparent 44%),linear-gradient(180deg,#081310 0%,#091714 42%,#07110f 100%);
+}
+html,body{background:#06100e;color:var(--text);font-family:Inter,system-ui,sans-serif}
+.app{background:var(--app-grad);}
+.top{padding:calc(16px + env(safe-area-inset-top)) 20px 14px;background:linear-gradient(180deg,rgba(6,16,14,.92),rgba(6,16,14,.62) 68%,transparent)}
+.top h1{font:400 32px/1.02 'Cormorant Garamond',Georgia,serif;color:#f3e9d6;letter-spacing:.2px}
+.top small,.eyebrow{color:#d8bb83;letter-spacing:3px;font-size:10px}
+.icon-btn{width:50px;height:50px;border-radius:50%;border:1px solid rgba(193,160,102,.55);background:radial-gradient(circle at 35% 30%,rgba(255,244,210,.18),transparent 25%),rgba(7,20,16,.76);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04)}
+
+.bottom{padding:11px 12px calc(8px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(6,17,14,.94),rgba(5,14,12,.98));border-top:1px solid rgba(191,158,101,.28);box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+.bottom button{gap:6px;color:#99a193;font-size:11px;font-weight:500;letter-spacing:.2px}
+.bottom button em{font-style:normal}
+.bottom .nav-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:999px;color:currentColor;transition:all .18s ease}
+.bottom .nav-icon svg{width:22px;height:22px;display:block}
+.bottom button.active{color:#f0dfbe}
+.bottom button.active .nav-icon{color:#e3bf84;filter:drop-shadow(0 0 10px rgba(220,188,120,.2))}
+
+.page-rich{padding:8px 16px 28px}
+.hero-panel{padding:18px 18px 16px;border:1px solid rgba(188,153,97,.24);border-radius:24px;background:radial-gradient(circle at 78% 0%,rgba(43,97,84,.25),transparent 28%),linear-gradient(145deg,rgba(14,34,29,.95),rgba(9,22,19,.98));box-shadow:0 18px 34px rgba(0,0,0,.18)}
+.hero-title-alt{font:400 44px/1 'Cormorant Garamond',Georgia,serif;margin:8px 0 6px;color:#f3e7d0}
+.hero-subtle{margin:0;color:#b9bcae;font-size:14px;line-height:1.6;max-width:40ch}
+.hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.hero-actions{display:grid;gap:10px;margin-top:16px}
+.primary{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--gold-1),var(--gold-2) 55%,var(--gold-3));border:1px solid rgba(255,226,173,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.26),0 10px 20px rgba(0,0,0,.18);min-height:54px;border-radius:16px;color:#16160f;font-weight:700}
+.secondary{background:linear-gradient(145deg,rgba(10,21,18,.88),rgba(10,23,20,.96));color:#ead3a0;border:1px solid rgba(191,158,101,.42);min-height:52px;border-radius:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.pill{background:rgba(22,40,35,.8);border:1px solid rgba(191,158,101,.34);padding:8px 12px;border-radius:999px;font-size:12px;color:#e9d6b1}
+.muted-pill{color:#c0c1b0}
+.stats-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.stat-tile{padding:16px 14px;border-radius:18px;background:linear-gradient(145deg,rgba(15,34,30,.92),rgba(9,21,18,.96));border:1px solid rgba(175,144,99,.22)}
+.stat-tile small{display:block;color:#c4b387;text-transform:uppercase;letter-spacing:1.4px;font-size:10px;margin-bottom:10px}
+.stat-tile strong{display:block;font:400 34px/1 'Cormorant Garamond',Georgia,serif;color:#f3e6cc}
+.stat-tile span{display:block;color:#abb1a0;font-size:13px;margin-top:4px}
+.activity-panel{padding:16px 16px 4px;border-radius:24px;background:linear-gradient(145deg,rgba(14,31,27,.96),rgba(8,18,16,.98));border:1px solid rgba(175,144,99,.24)}
+.activity-header{margin-bottom:6px}
+.activity-header .mini-title{margin:8px 0 0;font:400 30px/1 'Cormorant Garamond',Georgia,serif;color:#f3e6cc}
+.activity-card{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:16px 0;border-top:1px solid rgba(191,158,101,.14)}
+.activity-card:first-of-type{border-top:0;padding-top:4px}
+.activity-copy{min-width:0;flex:1}
+.activity-topline{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:5px}
+.activity-topline strong{font-size:18px;color:#f2e6cf}
+.activity-distance{font:500 28px/1 'Cormorant Garamond',Georgia,serif;color:#dec08b;white-space:nowrap}
+.activity-copy small{display:block;color:#aeb2a4;line-height:1.6}
+.activity-copy p{margin:8px 0 0;color:#d5ccb8;font-size:13px;line-height:1.55}
+.activity-edit{width:auto;min-width:96px;padding:0 16px;min-height:46px;white-space:nowrap;align-self:center}
+.panel,.journal,.journey-dashboard,.sheet{border-radius:24px}
+.sheet h2,.section-title,.mini-title{font-family:'Cormorant Garamond',Georgia,serif}
+.section-title{font-size:34px;font-weight:400;color:#f3e6cf}
+.mini-title{font-size:28px;font-weight:400;color:#f0e4ca}
+.metrics strong{font-family:'Cormorant Garamond',Georgia,serif;color:#f1e0bf;font-size:30px}
+.list-row{padding:14px 0}
+.discover,.badge-card,.panel,.journey-dashboard,.journal{background:linear-gradient(150deg,rgba(15,34,29,.96),rgba(8,20,17,.98))!important}
+
+.atlas-immersive{background:#111913}
+.atlas-immersive .immersive-image{object-fit:cover!important;filter:saturate(.98) contrast(1.02) brightness(.98)}
+.atlas-immersive .immersive-map{background:#101712}
+.atlas-immersive:before{background:linear-gradient(180deg,rgba(5,14,12,.98) 0%,rgba(5,14,12,.92) 12%,rgba(6,16,13,.62) 21%,rgba(7,18,14,.08) 34%,transparent 44%,transparent 70%,rgba(5,12,10,.25) 82%,rgba(5,12,10,.92) 100%)}
+.immersive-head{top:calc(env(safe-area-inset-top) + 16px);padding:0 84px 0 18px}
+.immersive-head small{color:#d8bb83;letter-spacing:3px;font-size:10px}
+.immersive-head h2{font:400 clamp(34px,8vw,54px)/.96 'Cormorant Garamond',Georgia,serif;color:#f3e9d6;margin:6px 0 8px}
+.immersive-head p{font:400 clamp(16px,4vw,22px)/1.28 'Cormorant Garamond',Georgia,serif;color:#e8ddc8;max-width:24ch}
+.atlas-immersive .map-tools{right:12px!important;top:48%!important;gap:10px!important}
+.atlas-immersive .map-tools button{width:52px!important;height:52px!important;border-radius:50%!important;background:rgba(4,14,12,.9)!important;border:1px solid rgba(216,187,131,.82)!important;color:#f0dbb3!important;box-shadow:0 10px 24px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.04)}
+.immersive-bottom{left:18px;right:18px;bottom:18px;gap:10px}
+.immersive-pager{background:rgba(9,22,18,.72);border:1px solid rgba(191,158,101,.24);backdrop-filter:blur(10px);padding:4px 8px;box-shadow:0 10px 24px rgba(0,0,0,.2)}
+.immersive-pager button{font-size:28px}
+.map-progress-pill{min-width:190px;justify-content:center;background:rgba(7,20,16,.9);border:1px solid rgba(215,183,127,.72);box-shadow:0 12px 24px rgba(0,0,0,.24)}
+.map-progress-pill strong{font-size:24px;color:#f1dfbc}
+.immersive-info small{font-size:12px;color:#ebdcc1}
+
+@media (max-width:430px){
+  .page-rich{padding:8px 12px 24px}
+  .hero-panel{padding:16px}
+  .hero-title-alt{font-size:38px}
+  .stats-strip{grid-template-columns:1fr;gap:8px}
+  .stat-tile{padding:14px 14px 13px}
+  .activity-card{flex-direction:column;align-items:stretch}
+  .activity-edit{width:100%}
+  .atlas-immersive .immersive-image{object-fit:cover!important}
+  .immersive-head{padding:0 84px 0 16px}
+  .immersive-head p{max-width:18ch}
+  .atlas-immersive .map-tools button{width:48px!important;height:48px!important}
+}
+@media (max-height:760px){
+  .immersive-head h2{font-size:40px}
+  .immersive-head p{font-size:16px}
+}
