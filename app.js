@@ -406,7 +406,7 @@ function routePoint(ch,value,field='km'){
  return {ratio,x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,km:a.km+(b.km-a.km)*t,length:a.length+(b.length-a.length)*t,angle:Math.atan2((b.y-a.y)*ratio,b.x-a.x)*180/Math.PI+90};
 }
 function pointAtKm(ch,km){return routePoint(ch,km)}
-const FOOTPRINT_SPACING=26;
+const FOOTPRINT_SPACING=24;
 const footprintTransform=(p,side=1)=>`translate(${(p.x*10).toFixed(3)} ${(p.y*10*p.ratio).toFixed(3)}) rotate(${p.angle.toFixed(2)}) scale(${side} 1)`;
 function footprintTrail(ch,visibleKm,currentChapter){
  const route=chapterRoute(ch),current=pointAtKm(ch,visibleKm),symbol=`footprint-${ch}`,steps=[];
@@ -415,7 +415,7 @@ function footprintTrail(ch,visibleKm,currentChapter){
   const p=routePoint(ch,length,'length'),side=steps.length%2?-1:1;
   steps.push(`<use class="map-footstep" href="#${symbol}" data-trail-km="${p.km}" data-trail-length="${length}" transform="${footprintTransform(p,side)}" opacity="${length<=current.length-18?1:0}"/>`);
  }
- return `<svg class="map-footprints ${animating?'is-moving':'is-settled'}" viewBox="0 0 1000 ${1000*route.ratio}" aria-hidden="true" focusable="false"><defs><g id="${symbol}"><path d="M-2.8 1.5C-5-1-4.8-5-3.7-7.5C-2.6-10.2 1.2-10.6 3-8.3C5-5.8 3.5-2.6 2.3-.4C1.4 1.2-.8 2.6-2.8 1.5Z"/><path d="M-2.6 4C-3.6 5.8-3.4 8.6-1.4 9.4C.6 10.2 2.4 8.6 2.2 6.6C2 4.4-.5 3-2.6 4Z"/></g></defs>${steps.join('')}<g class="map-current-footprint" transform="${footprintTransform(current)}" opacity="${ch===currentChapter?1:0}"><g class="map-current-sole"><use href="#${symbol}"/></g></g></svg>`;
+ return `<svg class="map-footprints ${animating?'is-moving':'is-settled'}" viewBox="0 0 1000 ${1000*route.ratio}" aria-hidden="true" focusable="false"><defs><g id="${symbol}" transform="scale(1.6)"><path d="M-2.8 1.5C-5-1-4.8-5-3.7-7.5C-2.6-10.2 1.2-10.6 3-8.3C5-5.8 3.5-2.6 2.3-.4C1.4 1.2-.8 2.6-2.8 1.5Z"/><path d="M-2.6 4C-3.6 5.8-3.4 8.6-1.4 9.4C.6 10.2 2.4 8.6 2.2 6.6C2 4.4-.5 3-2.6 4Z"/></g></defs>${steps.join('')}<g class="map-current-footprint" transform="${footprintTransform(current)}" opacity="${ch===currentChapter?1:0}"><g class="map-current-sole"><use href="#${symbol}"/></g></g></svg>`;
 }
 function updateFootprintTrail(stage,ch,km){
  const current=pointAtKm(ch,km),svg=stage.querySelector('.map-footprints');
