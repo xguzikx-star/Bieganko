@@ -406,25 +406,62 @@ function routePoint(ch,value,field='km'){
  return {ratio,x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,km:a.km+(b.km-a.km)*t,length:a.length+(b.length-a.length)*t,angle:Math.atan2((b.y-a.y)*ratio,b.x-a.x)*180/Math.PI+90};
 }
 function pointAtKm(ch,km){return routePoint(ch,km)}
-const FOOTPRINT_SPACING=24;
-const footprintTransform=(p,side=1)=>`translate(${(p.x*10).toFixed(3)} ${(p.y*10*p.ratio).toFixed(3)}) rotate(${p.angle.toFixed(2)}) scale(${side} 1)`;
-function footprintTrail(ch,visibleKm,currentChapter){
- const route=chapterRoute(ch),current=pointAtKm(ch,visibleKm),symbol=`footprint-${ch}`,steps=[];
- // A single reusable sole silhouette, no emoji, progress stroke or position dot.
- for(let length=FOOTPRINT_SPACING;length<=route.length;length+=FOOTPRINT_SPACING){
-  const p=routePoint(ch,length,'length'),side=steps.length%2?-1:1;
-  steps.push(`<use class="map-footstep" href="#${symbol}" data-trail-km="${p.km}" data-trail-length="${length}" transform="${footprintTransform(p,side)}" opacity="${length<=current.length-18?1:0}"/>`);
+// Distances use the aspect-correct SVG coordinate system (1000 units wide).
+const FOOTPRINT_SPACING=56,FOOTPRINT_OFFSET=9,FOOTPRINT_HEAD_CLEARANCE=52;
+const footprintSide=index=>index%2?-1:1;
+function footprintCenter(p,side){
+ const angle=p.angle*Math.PI/180;
+ return {x:p.x*10-side*FOOTPRINT_OFFSET*Math.cos(angle),y:p.y*10*p.ratio-side*FOOTPRINT_OFFSET*Math.sin(angle)};
+}
+function chapterFootsteps(ch){
+ const route=chapterRoute(ch);
+ if(route.footsteps)return route.footsteps;
+ const steps=[];
+ for(let length=FOOTPRINT_SPACING;length<=route.length;){
+  const p=routePoint(ch,length,'length'),side=footprintSide(steps.length),center=footprintCenter(p,side);
+  // Tight hairpins need a little more room than straight sections.
+  if(steps.some(step=>Math.hypot(center.x-step.center.x,center.y-step.center.y)<36)){length+=4;continue}
+  steps.push({p,side,center});length+=FOOTPRINT_SPACING;
  }
- return `<svg class="map-footprints ${animating?'is-moving':'is-settled'}" viewBox="0 0 1000 ${1000*route.ratio}" aria-hidden="true" focusable="false"><defs><g id="${symbol}" transform="scale(1.6)"><path d="M-2.8 1.5C-5-1-4.8-5-3.7-7.5C-2.6-10.2 1.2-10.6 3-8.3C5-5.8 3.5-2.6 2.3-.4C1.4 1.2-.8 2.6-2.8 1.5Z"/><path d="M-2.6 4C-3.6 5.8-3.4 8.6-1.4 9.4C.6 10.2 2.4 8.6 2.2 6.6C2 4.4-.5 3-2.6 4Z"/></g></defs>${steps.join('')}<g class="map-current-footprint" transform="${footprintTransform(current)}" opacity="${ch===currentChapter?1:0}"><g class="map-current-sole"><use href="#${symbol}"/></g></g></svg>`;
+ route.footsteps=steps;return steps;
+}
+function currentFootprintCount(ch,p){
+ const steps=chapterFootsteps(ch);
+ let count=steps.filter(step=>step.p.length<=p.length-FOOTPRINT_HEAD_CLEARANCE).length;
+ // At a hairpin the head can approach older steps across the bend.
+ // Keep a continuous alternating prefix and leave room for its larger silhouette.
+ while(count){
+  const center=footprintCenter(p,footprintSide(count));
+  if(steps.slice(0,count).every(step=>Math.hypot(center.x-step.center.x,center.y-step.center.y)>=42))break;
+  count--;
+ }
+ return count;
+}
+function currentFootprintSide(ch,p){return footprintSide(currentFootprintCount(ch,p))}
+function footprintTransform(p,side=1){
+ // Local X is perpendicular to the tangent; mirror only the anatomy, not the offset.
+ return `translate(${(p.x*10).toFixed(3)} ${(p.y*10*p.ratio).toFixed(3)}) rotate(${p.angle.toFixed(2)}) translate(${-side*FOOTPRINT_OFFSET} 0) rotate(${-side*5}) scale(${side} 1)`;
+}
+function footprintTrail(ch,visibleKm,currentChapter){
+ const route=chapterRoute(ch),current=pointAtKm(ch,visibleKm),symbol=`footprint-${ch}`,steps=[],hasHead=ch===currentChapter;
+ const count=hasHead?currentFootprintCount(ch,current):chapterFootsteps(ch).length;
+ for(const {p,side} of chapterFootsteps(ch)){
+  const length=p.length;
+  steps.push(`<use class="map-footstep" href="#${symbol}" data-side="${side===1?'left':'right'}" data-trail-km="${p.km}" data-trail-length="${length}" transform="${footprintTransform(p,side)}" opacity="${steps.length<count?1:0}"/>`);
+ }
+ // Left bare footprint: heel, curved arch and ball, plus five distinct toes.
+ // The large toe is on the inner edge; the right foot mirrors this anatomy.
+ return `<svg class="map-footprints ${animating?'is-moving':'is-settled'}" viewBox="0 0 1000 ${1000*route.ratio}" aria-hidden="true" focusable="false"><defs><g id="${symbol}"><path d="M-4-5C-7-2-6 1-4 4C-3 6-5 8-4 11C-3 14 2 14 3 11C4 8 1 5 2 2C3 0 6-2 5-5C4-8-1-8-4-5Z"/><ellipse cx="3.5" cy="-11" rx="2.7" ry="3.3"/><ellipse cx="-1.5" cy="-11.8" rx="1.7" ry="2.3"/><ellipse cx="-5" cy="-10.2" rx="1.4" ry="1.9"/><ellipse cx="-7.5" cy="-7.6" rx="1.1" ry="1.5"/><ellipse cx="-8.7" cy="-4.5" rx=".9" ry="1.2"/></g></defs>${steps.join('')}<g class="map-current-footprint" transform="${footprintTransform(current,currentFootprintSide(ch,current))}" opacity="${hasHead?1:0}"><g class="map-current-sole"><use href="#${symbol}"/></g></g></svg>`;
 }
 function updateFootprintTrail(stage,ch,km){
  const current=pointAtKm(ch,km),svg=stage.querySelector('.map-footprints');
  svg.classList.add('is-moving');svg.classList.remove('is-settled');
- svg.querySelectorAll('.map-footstep').forEach(step=>{
-  const visible=+step.dataset.trailLength<=current.length-18?'1':'0';
+ const count=currentFootprintCount(ch,current);
+ svg.querySelectorAll('.map-footstep').forEach((step,index)=>{
+  const visible=index<count?'1':'0';
   if(step.getAttribute('opacity')!==visible)step.setAttribute('opacity',visible);
  });
- const head=svg.querySelector('.map-current-footprint');head.setAttribute('transform',footprintTransform(current));head.setAttribute('opacity','1');
+ const head=svg.querySelector('.map-current-footprint');head.setAttribute('transform',footprintTransform(current,currentFootprintSide(ch,current)));head.setAttribute('opacity','1');
 }
 let recentUnlockNames=[];
 function visibleKmForChapter(ch,distance,currentChapter){

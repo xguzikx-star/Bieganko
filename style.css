@@ -35,11 +35,11 @@ body.view-map .top .icon-btn{background:rgba(7,17,15,.45);backdrop-filter:blur(6
 /* Artwork already supplies location circles. Keep their accessible hit targets invisible. */
 .map-node:focus-visible{outline:1px solid #ffe8b5;outline-offset:-10px}
 .map-footprints{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;fill:#19a77b}
-.map-footstep{transition:opacity 120ms ease;stroke:#073b30;stroke-width:1.15;paint-order:stroke}
-.map-current-footprint{fill:#48dfaa;stroke:#073b30;stroke-width:1.15;filter:drop-shadow(0 0 4px #21c992b3)}
-.map-current-sole{transform:scale(1.2);transition:transform .3s ease;paint-order:stroke}
-.map-footprints.is-settled .map-current-sole{transform:scale(1.8);animation:footprintSettle .3s ease-out}
-@keyframes footprintSettle{from{transform:scale(1.2)}to{transform:scale(1.8)}}
+.map-footstep{transition:opacity 120ms ease;stroke:#073b30;stroke-width:.7;paint-order:stroke}
+.map-current-footprint{fill:#48dfaa;stroke:#073b30;stroke-width:.7;filter:drop-shadow(0 0 2px #21c99299)}
+.map-current-sole{transform:scale(1.1);transition:transform .3s ease;paint-order:stroke}
+.map-footprints.is-settled .map-current-sole{transform:scale(1.3);animation:footprintSettle .3s ease-out}
+@keyframes footprintSettle{from{transform:scale(1.1)}to{transform:scale(1.3)}}
 .illustration{margin-bottom:20px}.illustration img{width:100%;height:auto;display:block}.locked-art{display:grid;place-items:center;min-height:150px}.mystery-symbol{font-size:64px;color:var(--gold)}
 /* Chronicle: one continuous atlas, compact summaries and intrinsic-height panels. */
 .view-chronicle .top{padding-bottom:8px}.view-chronicle .top h1{font-size:32px}.view-chronicle .top small{display:none}
