@@ -68,3 +68,10 @@ body.view-map .top .icon-btn{background:rgba(7,17,15,.45);backdrop-filter:blur(6
 .calendar-month{margin:16px 0}.calendar-month h4{margin:0 0 6px;font-size:12px;font-weight:500}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;max-width:420px}.calendar-grid span{display:grid;place-items:center;min-height:28px;font-size:11px;color:var(--dim);border-radius:3px}.calendar-grid .active-day{background:#294c36;color:#ffe0a3}.calendar-grid .weekday{font-size:10px}.calendar-grid .future{opacity:.35}
 @media(min-width:600px){.map-add{max-width:620px;margin-inline:auto}}
 @media(max-width:360px){.map-add{margin-inline:16px}}
+
+/* Achievement cards: dismiss without leaving the current view. */
+.reveal-card{position:relative}
+.reveal-close{position:absolute;right:12px;top:12px;z-index:5;display:grid;place-items:center;width:36px;height:36px;border:1px solid #e6d3aa70;border-radius:50%;background:#10221bdc;color:#f3e6d0;font-size:27px;line-height:1;box-shadow:0 2px 8px #0005}
+.reveal-close:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.map-current-footprint{fill:#168b63;stroke:#043d2d;stroke-width:1.2;filter:drop-shadow(0 0 2px #051e17bb)}
+.map-footstep{fill:#138b65;stroke:#043d2d;stroke-width:1;paint-order:stroke}
