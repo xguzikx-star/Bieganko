@@ -224,12 +224,37 @@ function renderTraining(){
  return `<div class="page"><section class="section-block"><div class="section-header"><small class="eyebrow">TWOJA AKTYWNOŚĆ</small><h2>Każdy krok ma znaczenie</h2><p class="section-lead">Zapisuj treningi i buduj postęp na szlaku.</p></div><div class="tag-row"><span class="pill">${ws.length} treningów</span><span class="pill">${fmt(real())} km</span><span class="pill">${fmt(hours)} h</span></div><div class="cta-stack"><button class="primary" id="newWorkout">+ Zapisz trening</button><button class="secondary" id="importBackup">Importuj kopię JSON</button></div></section><section class="section-block"><small class="eyebrow">HISTORIA AKTYWNOŚCI</small><h3 class="soft-title" style="font-size:46px;margin:6px 0 10px">Ostatnie wpisy</h3><div class="training-list">${ws.length?ws.map(w=>`<article class="entry"><div class="entry-head"><div><div class="entry-title">${esc(w.type)}</div><div class="entry-meta">${esc(w.date)} · ${w.place==='treadmill'?'Bieżnia':'Teren'}${w.minutes?' · '+fmt(w.minutes)+' min':''}${w.runMinutes?' · bieg '+fmt(w.runMinutes)+' min':''}${w.heartRate?' · ❤ '+fmt(w.heartRate)+' bpm':''}</div></div><div class="entry-title" style="font-size:40px">${fmt(w.km)} km</div></div><div class="entry-actions"><button class="secondary" data-edit="${esc(w.id)}">Edytuj</button></div></article>`).join(''):'<div class="empty">Jeszcze nie ma treningów. Dodaj pierwszy wpis, aby rozpocząć podróż.</div>'}</div></section></div>`;
 }
 
+const ATLAS_STORIES={
+ "Hobbiton": "Spokojne domostwa ukryte w pagórkach przypominają o tym, co warto chronić. Każdy dalszy krok oddala wędrowca od znajomych ścieżek.",
+ "Stary Las": "Korony drzew zasłaniają niebo, a pozornie zwyczajne ścieżki potrafią prowadzić w nieoczekiwane strony.",
+ "Bree": "W blasku okien gospody łatwo zapomnieć o niebezpieczeństwie poza murami. To jednak tylko krótki przystanek przed dalszą drogą.",
+ "Komarowe Bagna": "Nisko nad wodą unosi się wilgoć, a nierówny grunt spowalnia marsz. Za plecami zostają bezpieczne trakty i ostatnie zabudowania.",
+ "Wichrowy Czub": "Wzgórze odsłania dalekie przestrzenie Eriadoru, ale na szczycie trudno znaleźć schronienie przed wiatrem i czyimś spojrzeniem.",
+ "Bród Bruinen": "Spieniony nurt oddziela wędrowców od doliny, w której można wreszcie odzyskać siły po trudach pościgu.",
+ "Rivendell": "Między wodospadami i starymi drzewami czas płynie inaczej. Tutaj droga nie kończy się, lecz na chwilę pozwala zrozumieć, dokąd naprawdę prowadzi.",
+ "Hollin": "Ruiny i samotne kamienie przypominają o ludziach i elfach, którzy dawno opuścili te ziemie. Przed podróżnymi wznoszą się góry.",
+ "Caradhras": "Każdy metr wymaga wysiłku, gdy śnieg zaciera drogę, a pogoda nie pozwala spojrzeć daleko przed siebie.",
+ "Moria": "Dawne sale krasnoludów skrywają niezwykły kunszt, ale również ciszę, w której najmniejszy dźwięk może zdradzić obecność wędrowców.",
+ "Lothlórien": "Złote korony drzew tworzą schronienie odmienne od wszystkiego, co pozostawiono za sobą. To czas odpoczynku przed drogą na południe.",
+ "Anduina": "Zmieniające się brzegi i nurt wyznaczają rytm podróży. Na rzece każda decyzja przybliża Drużynę do kolejnego rozstaju.",
+ "Argonath": "Olbrzymie posągi zdają się strzec pamięci dawnego królestwa. W ich cieniu wyprawa wkracza na ziemie o coraz cięższej historii.",
+ "Rauros": "Huk wielkiej kaskady zagłusza słowa i myśli. W tym miejscu dotychczasowa droga dobiega końca, choć sama wyprawa trwa dalej.",
+ "Emyn Muil": "Skały wyglądają podobnie z każdej strony, więc łatwo zgubić kierunek. Tu cierpliwość jest równie ważna jak siła nóg.",
+ "Martwe Bagna": "Błędne światła odbijają się w nieruchomej wodzie, a każdy krok wymaga uwagi. Cisza tego miejsca ma w sobie coś niepokojącego.",
+ "Ithilien": "Pomiędzy wzgórzami pachną zioła, a strumienie przypominają o świecie poza cieniem Mordoru. Spokój jest jednak kruchy.",
+ "Cirith Ungol": "Stroma droga prowadzi ku przełęczy, gdzie każdy zakręt kryje następne zagrożenie. Odwrót staje się coraz trudniejszy.",
+ "Gorgoroth": "Popiół, skały i ciężkie powietrze odbierają siły. Pozostaje iść naprzód, choć cel wydaje się niebezpiecznie blisko.",
+ "Góra Przeznaczenia": "Wulkan góruje nad jałową krainą. Wszystkie wcześniejsze etapy prowadziły właśnie tutaj, do chwili rozstrzygnięcia."
+};
+
 function renderChronicle(){
  const done=discovered().slice().sort((a,b)=>b.km-a.km),entries=journalEntries(),dates=new Map();
  for(const e of entries)for(const name of e.reached)if(!dates.has(name))dates.set(name,e.w.date);
  const profiles=done.map(stop=>{
-  const id='place-'+stops.indexOf(stop),chapter=chapterByStop(stop.km),date=dates.get(stop.name);
-  return chronicleDisclosure(id,`<img class="profile-preview" src="${stopArt(stop)}" alt="" loading="lazy" width="480" height="270"><span class="profile-summary"><span class="chronicle-label">${stop.kind==='major'?'KAMIEŃ MILOWY':'ODKRYTE MIEJSCE'} · ${fmt(stop.km)} KM</span><span class="profile-name">${esc(stop.name)}</span><span class="chronicle-preview">${esc(stop.desc.match(/^[\s\S]*?[.!?](?:\s|$)/)?.[0]||stop.desc)}</span></span>`,`<img class="profile-art" src="${stopArt(stop)}" alt="Ilustracja miejsca: ${esc(stop.name)}" loading="lazy"><div class="profile-copy"><h3>${esc(stop.name)}</h3><p class="chronicle-metadata">${fmt(stop.km)} km szlaku${date?` · Odkryto <time datetime="${esc(date)}">${esc(date)}</time>`:''}</p><p>${esc(stop.desc)}</p><p class="chronicle-significance">${stop.km===0?'Początek Twojej wyprawy.':stop.km===TOTAL?'Ostatni kamień milowy — kres Drogi Pierścienia.':`Etap rozdziału ${chapter.roman}: ${esc(chapter.title)}. ${stop.km===chapter.goal?'To miejsce zamyka ten rozdział podróży.':'Ślad postępu na drodze '+esc(chapter.route.toLocaleLowerCase('pl-PL'))+'.'}`}</p></div>`,'milestone-profile');
+  const id='place-'+stops.indexOf(stop),date=dates.get(stop.name);
+  const summary=`<img class="profile-preview" src="${stopArt(stop)}" alt="" loading="lazy" width="480" height="270"><span class="profile-summary"><span class="profile-name">${esc(stop.name)}</span></span>`;
+  const body=`<div class="profile-copy"><p class="chronicle-metadata">${stop.kind==='major'?'Kamień milowy':'Odkryte miejsce'} · ${fmt(stop.km)} km szlaku${date?` · Odkryto <time datetime="${esc(date)}">${esc(date)}</time>`:''}</p><p>${esc(stop.desc)}</p><p>${esc(ATLAS_STORIES[stop.name]||'Każdy kolejny etap przybliża wędrowca do celu wyprawy.')}</p></div>`;
+  return chronicleDisclosure(id,summary,body,'milestone-profile');
  }).join('');
  return `<div class="page chronicle-page"><header class="chronicle-intro"><p>Ślady wyprawy, odkryte krainy i zapisane historie.</p><dl class="chronicle-stats"><div><dt>Odkryte miejsca</dt><dd>${done.length} / ${stops.length}</dd></div><div><dt>Przebyty dystans</dt><dd>${fmt(real())} km</dd></div><div><dt>Treningi</dt><dd>${data.workouts.length}</dd></div></dl></header><section class="chronicle-atlas" aria-labelledby="atlas-heading"><h2 id="atlas-heading">Atlas odkryć</h2>${profiles}${!data.workouts.length?'<p class="empty">Wszystko zaczyna się w Hobbitonie. Kolejne miejsca odkryjesz podczas treningów.</p>':''}</section>${journalPanel(entries.slice().reverse())}</div>`;
 }
