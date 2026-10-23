@@ -34,12 +34,12 @@ body.view-map .top .icon-btn{background:rgba(7,17,15,.45);backdrop-filter:blur(6
 .map-node{position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;border:0;border-radius:50%;background:transparent;pointer-events:auto}
 /* Artwork already supplies location circles. Keep their accessible hit targets invisible. */
 .map-node:focus-visible{outline:1px solid #ffe8b5;outline-offset:-10px}
-.map-footprints{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;fill:#fff0cb}
-.map-footstep{transition:opacity 120ms ease;stroke:#73552e;stroke-width:.65;paint-order:stroke}
-.map-current-footprint{filter:drop-shadow(0 0 3px #efce85b3)}
-.map-current-sole{transform:scale(1.25);transition:transform .3s ease;stroke:#795d32;stroke-width:.65;paint-order:stroke}
-.map-footprints.is-settled .map-current-sole{transform:scale(2.2);animation:footprintSettle .3s ease-out}
-@keyframes footprintSettle{from{transform:scale(1.25)}to{transform:scale(2.2)}}
+.map-footprints{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;fill:#19a77b}
+.map-footstep{transition:opacity 120ms ease;stroke:#073b30;stroke-width:1.15;paint-order:stroke}
+.map-current-footprint{fill:#48dfaa;stroke:#073b30;stroke-width:1.15;filter:drop-shadow(0 0 4px #21c992b3)}
+.map-current-sole{transform:scale(1.2);transition:transform .3s ease;paint-order:stroke}
+.map-footprints.is-settled .map-current-sole{transform:scale(1.8);animation:footprintSettle .3s ease-out}
+@keyframes footprintSettle{from{transform:scale(1.2)}to{transform:scale(1.8)}}
 .illustration{margin-bottom:20px}.illustration img{width:100%;height:auto;display:block}.locked-art{display:grid;place-items:center;min-height:150px}.mystery-symbol{font-size:64px;color:var(--gold)}
 /* Chronicle: one continuous atlas, compact summaries and intrinsic-height panels. */
 .view-chronicle .top{padding-bottom:8px}.view-chronicle .top h1{font-size:32px}.view-chronicle .top small{display:none}
