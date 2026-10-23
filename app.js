@@ -179,7 +179,7 @@ function showReveal(){
  el.querySelector('#revealNext').focus({preventScroll:true});
 }
 
-/* ---- Animacja: znacznik przechodzi po trasie od starej do nowej pozycji ---- */
+/* ---- Animacja śladów na ilustrowanej trasie ---- */
 
 /* ---- Kopia zapasowa ---- */
 function exportBackup(){
@@ -332,24 +332,99 @@ function renderGrowth(){
 // Routes are anchored to the NEW chapter artwork, as percentages of each image.
 // This avoids scaling errors between the 9:16 first illustration and 2:3 others.
 const CHAPTER_ANCHORS={
-  1:[[14,73.5],[24,65.5],[39.6,54],[45,48.5],[68.2,35.4],[79,29.5],[88,20.2]],
+  1:[[14,73.5],[27,65.5],[39.6,54],[54.2,45.6],[68.2,35.4],[79,29.5],[88,20.2]],
   2:[[33.2,16.4],[47,30.8],[65.3,41.8],[68.2,57.4],[36.5,86.7]],
-  3:[[19,10.6],[45,29.2],[51.8,52.4],[77.2,86.2]],
-  4:[[68.6,84.5],[54.2,68.2],[56.4,56.6],[48.1,40.1],[68.3,17.5],[83,12],[75.5,5.7]]
+  3:[[19,10.6],[65.5,29.2],[51.8,52.4],[77.2,86.2]],
+  4:[[68.6,84.5],[54.2,68.2],[56.4,56.6],[48.1,40.1],[68.3,17.5],[78.1,11.8],[75.5,5.7]]
 };
 function chapterVisualStops(ch){
  const meta=CHAPTERS[ch-1], chapterStops=stops.filter(s=>s.km>=meta.start&&s.km<=meta.goal), anchors=CHAPTER_ANCHORS[ch];
  return chapterStops.map((s,i)=>({...s,x:anchors[i][0],y:anchors[i][1]}));
 }
-function pointAtKm(ch,km){
- const pts=chapterVisualStops(ch);
- if(km<=pts[0].km)return pts[0];
- for(let i=0;i<pts.length-1;i++){
-  const a=pts[i],b=pts[i+1];if(km>b.km)continue;
-  const t=Math.max(0,Math.min(1,(km-a.km)/(b.km-a.km)));
-  return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
+// Intermediate guides traced on the unmodified portrait illustrations (image percentages).
+// Each section joins two discovery anchors; kilometres follow its actual arc length.
+const CHAPTER_ROUTE_GUIDES={
+ 1:[
+  [[18,72.8],[21.6,71.9],[23.2,70.2],[23.6,68.7],[26.5,67.4]],
+  [[27.5,64.5],[28.2,62.9],[30.3,61.8],[34,60.8],[35.2,59.5],[35,58],[34.3,56.8],[34.8,55.5],[36.3,54.7]],
+  [[44,52.8],[47,51.2],[49.4,48.5],[52,47.2]],
+  [[56,43.7],[59.8,42.1],[61.5,40.4],[62,38.9],[64.7,37.4]],
+  [[72.7,35.1],[75.2,35.1],[77.3,33.8],[77.8,32.2],[78.3,31.3],[80.8,30.3]],
+  [[80.5,28],[82.2,26.8],[81.7,25.7],[81.6,24.1],[83.1,23],[85.3,22.1]]
+ ],
+ 2:[
+  [[35.8,19.1],[40,21.4],[44.3,23.6],[46.5,26.2],[45.8,28.7]],
+  [[45.7,32.6],[49.1,34.2],[55.6,35.5],[60.8,37.2],[62.6,38.6],[63,39.8]],
+  [[65,43.6],[67.8,45.3],[71.3,47.1],[72.6,48.1],[71.4,49.4],[67.5,51.1],[65.3,52.7],[64.6,54.4],[65.7,55.9]],
+  [[69.4,59.9],[73.3,62.3],[73.6,63.5],[71.9,65.2],[70.2,67],[69.6,69],[69.1,70],[65.1,72.4],[64.4,74.3],[62.6,77.1],[64.6,79.5],[58.9,81.1],[51.7,82.6],[44.6,83.7],[39.1,85]]
+ ],
+ 3:[
+  [[19.1,12.5],[23.9,14],[25.8,14.7],[23.5,15.5],[25.4,16.5],[32.9,17.9],[39.4,19.9],[43.5,21.4],[44.5,22.2],[41.3,23.4],[42.1,24.3],[49,25.3],[56.7,26.5],[62.3,28]],
+  [[67,31.1],[71.2,33.4],[73.5,35.5],[73,37.1],[69.7,38.9],[68,39.9],[73.8,41.5],[79.1,42.9],[76.2,44.7],[70.1,45.7],[61.2,46.4],[54.7,47.8],[51.5,49.7]],
+  [[51.5,54.1],[54,55.7],[60.5,57.8],[69.4,59.8],[76.3,62.3],[82.6,65.3],[86.9,68.8],[89,72.7],[89.6,76.7],[87.8,79.6],[83,81.9],[78.1,84.2]]
+ ],
+ 4:[
+  [[66.5,82.9],[62.7,81.2],[63.4,79.5],[64.8,78.5],[63.1,77.7],[56.8,76.2],[51.8,74.6],[50.2,73],[51.6,71.1],[53.2,69.7]],
+  [[54.8,66.1],[53.1,64.2],[50.5,62.8],[46.3,61.6],[45.4,60.5],[47.7,59.4],[52.4,58.4]],
+  [[58.4,55],[63.7,53.7],[62,52.4],[62.8,51.7],[69,50.7],[74.2,49.4],[75.6,47.6],[75.7,45.7],[76.3,44],[73,43.5],[65.9,43.4],[61.6,42.5],[55.7,41.4],[51.3,40.7]],
+  [[50.7,39],[55.5,37.8],[57.6,36.9],[56,35.6],[56.5,34.9],[54,34],[50.1,33],[50,32.4],[54.4,33.3],[59.4,35.2],[68.8,35.6],[74.6,35.3],[75.5,34.5],[74.9,33.8],[78.4,32.1],[80.9,30.7],[80.2,30],[80,28.4],[78.3,26.2],[75.7,24.8],[72.7,23.4],[70.8,21.6],[68.9,20.3],[67,19.3],[67.1,18.6]],
+  [[69.8,15.4],[70.6,14.1],[74.4,13.1]],
+  [[77.5,11.1],[74.6,10.4],[75.7,9.3],[75.8,8.5],[75,7.6],[75,6.6]]
+ ]
+};
+const chapterRouteCache=new Map();
+function chapterRoute(ch){
+ if(chapterRouteCache.has(ch))return chapterRouteCache.get(ch);
+ const anchors=chapterVisualStops(ch),ratio=ch===1?1536/864:1.5,points=[];
+ let length=0;
+ for(let section=0;section<anchors.length-1;section++){
+  const a=anchors[section],b=anchors[section+1];
+  const guides=[[a.x,a.y],...CHAPTER_ROUTE_GUIDES[ch][section],[b.x,b.y]],samples=[];
+  let sectionLength=0;
+  for(let i=0;i<guides.length-1;i++){
+   const p0=guides[Math.max(0,i-1)],p1=guides[i],p2=guides[i+1],p3=guides[Math.min(guides.length-1,i+2)];
+   // Densely sampled Catmull–Rom follows bends without straight anchor-to-anchor shortcuts.
+   for(let j=0;j<12;j++){
+    const t=j/12,t2=t*t,t3=t2*t;
+    const value=axis=>.5*((2*p1[axis])+(-p0[axis]+p2[axis])*t+(2*p0[axis]-5*p1[axis]+4*p2[axis]-p3[axis])*t2+(-p0[axis]+3*p1[axis]-3*p2[axis]+p3[axis])*t3);
+    samples.push({x:value(0),y:value(1)});
+   }
+  }
+  samples.push({x:b.x,y:b.y});
+  samples.forEach((p,i)=>{if(i)sectionLength+=Math.hypot((p.x-samples[i-1].x)*10,(p.y-samples[i-1].y)*10*ratio);p.offset=sectionLength});
+  samples.forEach((p,i)=>{if(section&&i===0)return;points.push({...p,length:length+p.offset,km:a.km+(b.km-a.km)*p.offset/sectionLength})});
+  length+=sectionLength;
  }
- return pts.at(-1);
+ const route={points,length,ratio};chapterRouteCache.set(ch,route);return route;
+}
+function routePoint(ch,value,field='km'){
+ const {points,ratio}=chapterRoute(ch);
+ let lo=0,hi=points.length-1;
+ while(lo<hi){const mid=(lo+hi)>>1;if(points[mid][field]<value)lo=mid+1;else hi=mid}
+ const a=points[Math.max(0,lo-1)],b=points[Math.max(1,lo)];
+ const t=Math.max(0,Math.min(1,(value-a[field])/(b[field]-a[field])||0));
+ return {ratio,x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,km:a.km+(b.km-a.km)*t,length:a.length+(b.length-a.length)*t,angle:Math.atan2((b.y-a.y)*ratio,b.x-a.x)*180/Math.PI+90};
+}
+function pointAtKm(ch,km){return routePoint(ch,km)}
+const FOOTPRINT_SPACING=26;
+const footprintTransform=(p,side=1)=>`translate(${(p.x*10).toFixed(3)} ${(p.y*10*p.ratio).toFixed(3)}) rotate(${p.angle.toFixed(2)}) scale(${side} 1)`;
+function footprintTrail(ch,visibleKm,currentChapter){
+ const route=chapterRoute(ch),current=pointAtKm(ch,visibleKm),symbol=`footprint-${ch}`,steps=[];
+ // A single reusable sole silhouette, no emoji, progress stroke or position dot.
+ for(let length=FOOTPRINT_SPACING;length<=route.length;length+=FOOTPRINT_SPACING){
+  const p=routePoint(ch,length,'length'),side=steps.length%2?-1:1;
+  steps.push(`<use class="map-footstep" href="#${symbol}" data-trail-km="${p.km}" data-trail-length="${length}" transform="${footprintTransform(p,side)}" opacity="${length<=current.length-18?1:0}"/>`);
+ }
+ return `<svg class="map-footprints ${animating?'is-moving':'is-settled'}" viewBox="0 0 1000 ${1000*route.ratio}" aria-hidden="true" focusable="false"><defs><g id="${symbol}"><path d="M-2.8 1.5C-5-1-4.8-5-3.7-7.5C-2.6-10.2 1.2-10.6 3-8.3C5-5.8 3.5-2.6 2.3-.4C1.4 1.2-.8 2.6-2.8 1.5Z"/><path d="M-2.6 4C-3.6 5.8-3.4 8.6-1.4 9.4C.6 10.2 2.4 8.6 2.2 6.6C2 4.4-.5 3-2.6 4Z"/></g></defs>${steps.join('')}<g class="map-current-footprint" transform="${footprintTransform(current)}" opacity="${ch===currentChapter?1:0}"><g class="map-current-sole"><use href="#${symbol}"/></g></g></svg>`;
+}
+function updateFootprintTrail(stage,ch,km){
+ const current=pointAtKm(ch,km),svg=stage.querySelector('.map-footprints');
+ svg.classList.add('is-moving');svg.classList.remove('is-settled');
+ svg.querySelectorAll('.map-footstep').forEach(step=>{
+  const visible=+step.dataset.trailLength<=current.length-18?'1':'0';
+  if(step.getAttribute('opacity')!==visible)step.setAttribute('opacity',visible);
+ });
+ const head=svg.querySelector('.map-current-footprint');head.setAttribute('transform',footprintTransform(current));head.setAttribute('opacity','1');
 }
 let recentUnlockNames=[];
 function visibleKmForChapter(ch,distance,currentChapter){
@@ -360,13 +435,12 @@ function visibleKmForChapter(ch,distance,currentChapter){
 }
 function mapProgressOverlay(ch,distance,currentChapter){
   const pts=chapterVisualStops(ch),visibleKm=visibleKmForChapter(ch,distance,currentChapter);
-  const currentPoint=pointAtKm(ch,visibleKm);
   const nodes=pts.map((p,idx)=>{
     const state=p.km<visibleKm-0.01?'done':Math.abs(p.km-visibleKm)<0.6?'current':(p.km<=visibleKm+0.01?'done':'future');
     const fresh=p.km<=visibleKm&&recentUnlockNames.includes(p.name)?' new':'';
     return `<button class="map-node ${state}${fresh}" data-stop-name="${esc(p.name)}" data-stop-km="${p.km}" aria-label="${esc(p.name)}" style="left:${p.x}%;top:${p.y}%"></button>`;
   }).join('');
-  return `<div class="map-progress-overlay">${nodes}<div aria-hidden="true" class="map-traveler ${animating?'is-moving':''}" style="left:${currentPoint.x}%;top:${currentPoint.y}%"><span></span></div></div>`;
+  return `<div class="map-progress-overlay">${footprintTrail(ch,visibleKm,currentChapter)}${nodes}</div>`;
 }
 function stopIndexByKm(km){return stops.findIndex(s=>Math.abs(s.km-km)<1e-9)}
 function openStopByVisual(km){const idx=stopIndexByKm(km);if(idx>=0)goToStop(idx)}
@@ -435,8 +509,7 @@ function animateTrail(from,to,done){
   selectedChapter=chapter;
   let stage=$('#mapStage');if(!stage){finishTrail();return}
   if(+stage.dataset.chapter!==chapter){render();stage=$('#mapStage');stage.scrollIntoView({block:'start',behavior:'auto'})}
-  const point=pointAtKm(chapter,displayK),marker=stage.querySelector('.map-traveler');
-  marker.classList.add('is-moving');marker.style.left=point.x+'%';marker.style.top=point.y+'%';
+  updateFootprintTrail(stage,chapter,displayK);
   stage.querySelectorAll('[data-stop-km]').forEach(btn=>{
    const km=+btn.dataset.stopKm;btn.classList.toggle('done',km<=displayK);btn.classList.toggle('future',km>displayK);
    btn.classList.toggle('new',km<=displayK&&recentUnlockNames.includes(btn.dataset.stopName));

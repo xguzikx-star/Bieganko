@@ -115,7 +115,7 @@ async function swipe(page,dx,dy=0,cancel=false){await page.locator('#mapStage').
  const edited=(await state(page)).workouts[0];ok(edited.heartRate===125&&edited.custom==='keep'&&JSON.stringify(edited.zones)==='[1,2,3]','edit preserves hidden workout fields');
  // New workout crosses I -> II: sample real animation, both chapters, and exact final position.
  await seed(page);await page.emulateMedia({reducedMotion:'no-preference'});await page.locator('[data-view="training"]').click();await page.locator('#newWorkout').click();await page.locator('[name="km"]').fill('10');await page.locator('#workoutForm [type="submit"]').click();
- await page.waitForFunction(()=>animating&&displayK>720&&displayK<737);const first=await page.locator('.map-traveler').getAttribute('style');await page.waitForTimeout(140);ok(first!==await page.locator('.map-traveler').getAttribute('style'),'traveler moves between frames');
+ await page.waitForFunction(()=>animating&&displayK>720&&displayK<737);const first=await page.locator('.map-current-footprint').getAttribute('transform');await page.waitForTimeout(140);ok(first!==await page.locator('.map-current-footprint').getAttribute('transform'),'current footprint moves between frames');
  await page.waitForFunction(()=>animating&&document.querySelector('#mapStage').dataset.chapter==='2');ok(true,'animation crosses chapter boundary');await page.waitForFunction(()=>!animating&&displayK===null);
  ok(await page.locator('#mapStage').getAttribute('data-chapter')==='2','ends on chapter II');ok((await state(page)).workouts.length===2,'new training appended');
  await page.waitForSelector('.reveal.in');ok((await page.locator('.reveal h2').textContent())==='Rivendell','new location revealed');
